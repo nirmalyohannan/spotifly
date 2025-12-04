@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/network/spotify_api_client.dart';
 import 'package:spotifly/features/home/domain/repositories/home_repository.dart';
@@ -26,7 +28,7 @@ class HomeRepositoryImpl implements HomeRepository {
         );
       }).toList();
     } catch (e) {
-      print('Error fetching featured playlists: $e');
+      log('Error fetching featured playlists: $e');
       return [];
     }
   }
@@ -51,7 +53,7 @@ class HomeRepositoryImpl implements HomeRepository {
         );
       }).toList();
     } catch (e) {
-      print('Error fetching new releases: $e');
+      log('Error fetching new releases: $e');
       return [];
     }
   }
@@ -78,7 +80,7 @@ class HomeRepositoryImpl implements HomeRepository {
         );
       }).toList();
     } catch (e) {
-      print('Error fetching recently played: $e');
+      log('Error fetching recently played: $e');
       return [];
     }
   }

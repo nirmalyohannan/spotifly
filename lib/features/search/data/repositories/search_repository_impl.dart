@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/network/spotify_api_client.dart';
 import 'package:spotifly/features/search/domain/entities/search_results.dart';
@@ -21,8 +23,12 @@ class SearchRepositoryImpl implements SearchRepository {
         '/search?q=$encodedQuery&type=track,playlist&limit=10',
       );
 
-      final tracksData = data['tracks']['items'] as List;
-      final playlistsData = data['playlists']['items'] as List;
+      final tracksData = (data['tracks']['items'] as List)
+          .where((item) => item != null)
+          .toList();
+      final playlistsData = (data['playlists']['items'] as List)
+          .where((item) => item != null)
+          .toList();
 
       final songs = tracksData.map((item) {
         final track = SpotifyTrack.fromJson(item);
@@ -54,7 +60,7 @@ class SearchRepositoryImpl implements SearchRepository {
 
       return SearchResults(songs: songs, playlists: playlists);
     } catch (e) {
-      print('Error searching: $e');
+      log('Error searching: $e');
       return SearchResults(songs: [], playlists: []);
     }
   }

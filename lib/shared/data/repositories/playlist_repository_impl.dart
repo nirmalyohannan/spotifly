@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/network/spotify_api_client.dart';
 import 'package:spotifly/shared/data/models/spotify_models.dart';
@@ -18,7 +20,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         return _mapSpotifyTrackToSong(track);
       }).toList();
     } catch (e) {
-      print('Error fetching liked songs: $e');
+      log('Error fetching liked songs: $e');
       return [];
     }
   }
@@ -51,7 +53,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         songs: songs,
       );
     } catch (e) {
-      print('Error fetching playlist $id: $e');
+      log('Error fetching playlist $id: $e');
       return null;
     }
   }
@@ -74,7 +76,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         );
       }).toList();
     } catch (e) {
-      print('Error fetching playlists: $e');
+      log('Error fetching playlists: $e');
       return [];
     }
   }

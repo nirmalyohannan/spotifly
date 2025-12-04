@@ -73,11 +73,11 @@ class SpotifyAuthService {
         );
         return true;
       } else {
-        print('Failed to exchange code: ${response.body}');
+        dev.log('Failed to exchange code: ${response.body}');
         return false;
       }
     } catch (e) {
-      print('Error exchanging code: $e');
+      dev.log('Error exchanging code: $e');
       return false;
     }
   }
@@ -119,7 +119,7 @@ class SpotifyAuthService {
         );
       }
     } catch (e) {
-      print('Error refreshing token: $e');
+      dev.log('Error refreshing token: $e');
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart' hide PlayerState, PlayerEvent;
 import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
@@ -31,7 +33,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         _audioPlayer.play();
       } catch (e) {
         // In a real app, we would handle errors properly
-        print("Error loading audio: $e");
+        log("Error loading audio: $e");
       }
     });
 
