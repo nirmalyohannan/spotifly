@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
+import 'package:spotifly/core/theme/app_colors.dart';
 
 class SectionHeader extends StatelessWidget {
   final String title;
   final VoidCallback? onMoreTap;
 
-  const SectionHeader({
-    super.key,
-    required this.title,
-    this.onMoreTap,
-  });
+  const SectionHeader({super.key, required this.title, this.onMoreTap});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +23,8 @@ class SectionHeader extends StatelessWidget {
           ),
           if (onMoreTap != null)
             Icon(
-              Icons.bolt, // Placeholder for settings or history if needed, or just omit
+              Icons
+                  .bolt, // Placeholder for settings or history if needed, or just omit
               color: AppColors.textSecondary,
             ),
         ],

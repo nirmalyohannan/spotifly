@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:spotifly/presentation/widgets/section_header.dart';
+import 'package:spotifly/shared/presentation/widgets/section_header.dart';
 
 class SearchPage extends StatelessWidget {
   const SearchPage({super.key});

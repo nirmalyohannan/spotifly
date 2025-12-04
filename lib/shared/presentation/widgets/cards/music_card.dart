@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:spotifly/core/theme/app_colors.dart';
 
 class MusicCard extends StatelessWidget {
   final String title;
@@ -27,8 +27,9 @@ class MusicCard extends StatelessWidget {
       child: SizedBox(
         width: size,
         child: Column(
-          crossAxisAlignment:
-              isCircular ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+          crossAxisAlignment: isCircular
+              ? CrossAxisAlignment.center
+              : CrossAxisAlignment.start,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(isCircular ? size / 2 : 4),
@@ -39,7 +40,9 @@ class MusicCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
                   color: AppColors.surface,
-                  child: const Center(child: Icon(Icons.music_note, color: Colors.grey)),
+                  child: const Center(
+                    child: Icon(Icons.music_note, color: Colors.grey),
+                  ),
                 ),
                 errorWidget: (context, url, error) => Container(
                   color: AppColors.surface,
@@ -51,9 +54,9 @@ class MusicCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: isCircular ? TextAlign.center : TextAlign.start,

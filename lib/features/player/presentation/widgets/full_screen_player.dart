@@ -49,7 +49,7 @@ class FullScreenPlayer extends StatelessWidget {
                   decoration: BoxDecoration(
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withAlpha(128),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -110,7 +110,7 @@ class FullScreenPlayer extends StatelessWidget {
                           song.artist,
                           style: TextStyle(
                             fontSize: 18,
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                           ),
                         ),
                       ],
@@ -129,7 +129,7 @@ class FullScreenPlayer extends StatelessWidget {
                 SliderTheme(
                   data: SliderTheme.of(context).copyWith(
                     activeTrackColor: Colors.white,
-                    inactiveTrackColor: Colors.white.withOpacity(0.3),
+                    inactiveTrackColor: Colors.white.withValues(alpha: 0.3),
                     thumbColor: Colors.white,
                     trackHeight: 4,
                     thumbShape: const RoundSliderThumbShape(
@@ -158,7 +158,7 @@ class FullScreenPlayer extends StatelessWidget {
                       Text(
                         state.position.toString().substring(2, 7),
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 12,
                         ),
                       ),
@@ -168,7 +168,7 @@ class FullScreenPlayer extends StatelessWidget {
                           7,
                         ),
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 12,
                         ),
                       ),
