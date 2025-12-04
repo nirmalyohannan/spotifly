@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:spotifly/presentation/widgets/section_header.dart';
 
@@ -206,7 +207,7 @@ class CategoryCard extends StatelessWidget {
                       ),
                     ],
                     image: DecorationImage(
-                      image: NetworkImage(imageUrl),
+                      image: CachedNetworkImageProvider(imageUrl),
                       fit: BoxFit.cover,
                     ),
                   ),

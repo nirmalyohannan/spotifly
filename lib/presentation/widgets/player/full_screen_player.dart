@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spotifly/presentation/providers/player_provider.dart';
@@ -40,7 +41,7 @@ class FullScreenPlayer extends StatelessWidget {
               width: 350,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: NetworkImage(song.coverUrl),
+                  image: CachedNetworkImageProvider(song.coverUrl),
                   fit: BoxFit.cover,
                 ),
                 boxShadow: [

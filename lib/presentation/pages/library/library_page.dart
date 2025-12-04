@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:spotifly/core/theme/app_colors.dart';
 import 'package:spotifly/data/repositories/mock_data.dart';
@@ -13,7 +14,7 @@ class LibraryPage extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: CircleAvatar(
-            backgroundImage: NetworkImage(
+            backgroundImage: CachedNetworkImageProvider(
               'https://i.pravatar.cc/150?img=5',
             ), // Mock User
             backgroundColor: Colors.grey,
@@ -125,7 +126,9 @@ class LibraryPage extends StatelessWidget {
                     subtitle: 'Artist',
                     leading: CircleAvatar(
                       radius: 25,
-                      backgroundImage: NetworkImage(artist.imageUrl),
+                      backgroundImage: CachedNetworkImageProvider(
+                        artist.imageUrl,
+                      ),
                     ),
                   ),
                 ),
@@ -136,8 +139,8 @@ class LibraryPage extends StatelessWidget {
                     subtitle: 'Playlist • ${playlist.creator}',
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(4),
-                      child: Image.network(
-                        playlist.coverUrl,
+                      child: CachedNetworkImage(
+                        imageUrl: playlist.coverUrl,
                         width: 50,
                         height: 50,
                         fit: BoxFit.cover,

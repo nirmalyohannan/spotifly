@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spotifly/presentation/providers/player_provider.dart';
@@ -39,8 +40,8 @@ class MiniPlayer extends StatelessWidget {
                       topLeft: Radius.circular(4),
                       bottomLeft: Radius.circular(4),
                     ),
-                    child: Image.network(
-                      song.coverUrl,
+                    child: CachedNetworkImage(
+                      imageUrl: song.coverUrl,
                       width: 60,
                       height: 60,
                       fit: BoxFit.cover,
