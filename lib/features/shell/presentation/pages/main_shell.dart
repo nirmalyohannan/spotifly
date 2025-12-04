@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:spotifly/presentation/pages/home/home_page.dart';
-import 'package:spotifly/presentation/pages/library/library_page.dart';
-import 'package:spotifly/presentation/pages/search/search_page.dart';
-import 'package:spotifly/presentation/widgets/player/mini_player.dart';
-import '../../core/theme/app_colors.dart';
+import 'package:spotifly/features/home/presentation/pages/home_page.dart';
+import 'package:spotifly/features/library/presentation/pages/library_page.dart';
+import 'package:spotifly/features/search/presentation/pages/search_page.dart';
+import 'package:spotifly/features/player/presentation/widgets/mini_player.dart';
+import 'package:spotifly/core/theme/app_colors.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});

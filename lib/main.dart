@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:spotifly/application/bloc/player_bloc.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
 import 'package:spotifly/core/theme/app_theme.dart';
-import 'package:spotifly/presentation/widgets/main_shell.dart';
+import 'package:spotifly/features/shell/presentation/pages/main_shell.dart';
 
 void main() {
   runApp(

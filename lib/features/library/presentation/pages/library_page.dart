@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:spotifly/core/theme/app_colors.dart';
-import 'package:spotifly/data/repositories/mock_data.dart';
+import 'package:spotifly/shared/data/data_sources/mock_data.dart';
 
 class LibraryPage extends StatelessWidget {
   const LibraryPage({super.key});

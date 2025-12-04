@@ -1,10 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:spotifly/application/bloc/player_bloc.dart';
-import 'package:spotifly/application/bloc/player_event.dart';
-import 'package:spotifly/application/bloc/player_state.dart';
-import 'package:spotifly/presentation/widgets/player/full_screen_player.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
+import 'package:spotifly/features/player/presentation/widgets/full_screen_player.dart';
 
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});

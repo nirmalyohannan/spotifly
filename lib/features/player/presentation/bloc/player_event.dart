@@ -1,6 +1,5 @@
-
 import 'package:meta/meta.dart';
-import '../../domain/entities/song.dart';
+import 'package:spotifly/shared/domain/entities/song.dart';
 
 @immutable
 abstract class PlayerEvent {}
