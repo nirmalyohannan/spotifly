@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/domain/entities/song.dart';
 
@@ -35,12 +36,12 @@ class LikedSongsPage extends StatelessWidget {
             delegate: SliverChildBuilderDelegate((context, index) {
               final song = songs[index];
               return ListTile(
-                leading: Image.network(
-                  song.coverUrl,
+                leading: CachedNetworkImage(
+                  imageUrl: song.coverUrl,
                   width: 50,
                   height: 50,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
+                  errorWidget: (context, error, stackTrace) => Container(
                     width: 50,
                     height: 50,
                     color: Colors.grey,

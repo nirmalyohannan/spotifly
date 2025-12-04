@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:spotifly/shared/data/repositories/playlist_repository_impl.dart';
 import '../../../../shared/domain/entities/playlist.dart';
@@ -42,10 +43,10 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                 pinned: true,
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(playlist.title),
-                  background: Image.network(
-                    playlist.coverUrl,
+                  background: CachedNetworkImage(
+                    imageUrl: playlist.coverUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
+                    errorWidget: (context, error, stackTrace) => Container(
                       color: Colors.grey,
                       child: const Center(
                         child: Icon(
@@ -71,12 +72,12 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final song = playlist.songs[index];
                     return ListTile(
-                      leading: Image.network(
-                        song.coverUrl,
+                      leading: CachedNetworkImage(
+                        imageUrl: song.coverUrl,
                         width: 50,
                         height: 50,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+                        errorWidget: (context, error, stackTrace) => Container(
                           width: 50,
                           height: 50,
                           color: Colors.grey,

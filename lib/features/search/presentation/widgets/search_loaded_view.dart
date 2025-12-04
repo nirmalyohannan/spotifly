@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:spotifly/features/library/presentation/pages/playlist_detail_page.dart';
 import 'package:spotifly/features/search/domain/entities/search_results.dart';
@@ -23,12 +24,12 @@ class SearchLoadedView extends StatelessWidget {
           ),
           ...results.songs.map(
             (song) => ListTile(
-              leading: Image.network(
-                song.coverUrl,
+              leading: CachedNetworkImage(
+                imageUrl: song.coverUrl,
                 width: 50,
                 height: 50,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+                errorWidget: (context, error, stackTrace) => Container(
                   width: 50,
                   height: 50,
                   color: Colors.grey,
@@ -53,12 +54,12 @@ class SearchLoadedView extends StatelessWidget {
           ),
           ...results.playlists.map(
             (playlist) => ListTile(
-              leading: Image.network(
-                playlist.coverUrl,
+              leading: CachedNetworkImage(
+                imageUrl: playlist.coverUrl,
                 width: 50,
                 height: 50,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+                errorWidget: (context, error, stackTrace) => Container(
                   width: 50,
                   height: 50,
                   color: Colors.grey,
