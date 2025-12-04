@@ -1,0 +1,82 @@
+import 'package:flutter/material.dart';
+import 'package:spotifly/features/library/presentation/pages/playlist_detail_page.dart';
+import 'package:spotifly/features/search/domain/entities/search_results.dart';
+
+class SearchLoadedView extends StatelessWidget {
+  final SearchResults results;
+  const SearchLoadedView({super.key, required this.results});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: [
+        if (results.songs.isNotEmpty) ...[
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Songs',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ...results.songs.map(
+            (song) => ListTile(
+              leading: Image.network(
+                song.coverUrl,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 50,
+                  height: 50,
+                  color: Colors.grey,
+                  child: const Icon(Icons.music_note),
+                ),
+              ),
+              title: Text(song.title),
+              subtitle: Text(song.artist),
+              onTap: () {
+                // Play song
+              },
+            ),
+          ),
+        ],
+        if (results.playlists.isNotEmpty) ...[
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Playlists',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ...results.playlists.map(
+            (playlist) => ListTile(
+              leading: Image.network(
+                playlist.coverUrl,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 50,
+                  height: 50,
+                  color: Colors.grey,
+                  child: const Icon(Icons.music_note),
+                ),
+              ),
+              title: Text(playlist.title),
+              subtitle: Text('Playlist • ${playlist.creator}'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        PlaylistDetailPage(playlist: playlist),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
