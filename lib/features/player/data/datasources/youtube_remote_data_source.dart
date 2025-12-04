@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:spotifly/core/youtube_user_agent.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
@@ -24,7 +26,17 @@ class YoutubeRemoteDataSourceImpl implements YoutubeRemoteDataSource {
       video.id,
       ytClients: [YoutubeUserAgent.ytClient],
     );
-    final audioStreamInfo = manifest.audioOnly.withHighestBitrate();
+    final AudioOnlyStreamInfo audioStreamInfo;
+    if (Platform.isAndroid || Platform.isWindows || Platform.isLinux) {
+      audioStreamInfo = manifest.audioOnly.withHighestBitrate();
+    } else {
+      //For IOS, MacOS, Web
+      //These platforms may not support .Opus format
+      //So  using mp4
+      audioStreamInfo = manifest.audioOnly
+          .where((element) => element.container.name == 'mp4')
+          .withHighestBitrate();
+    }
 
     return audioStreamInfo.url.toString();
   }
