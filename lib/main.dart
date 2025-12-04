@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:spotifly/application/bloc/player_bloc.dart';
 import 'package:spotifly/core/theme/app_theme.dart';
 import 'package:spotifly/presentation/widgets/main_shell.dart';
-import 'package:spotifly/presentation/providers/player_provider.dart';
 
 void main() {
   runApp(
-    MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => PlayerProvider())],
-      child: const SpotiFlyApp(),
-    ),
+    BlocProvider(create: (context) => PlayerBloc(), child: const SpotiFlyApp()),
   );
 }
 
