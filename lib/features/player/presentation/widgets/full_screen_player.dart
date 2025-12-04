@@ -19,7 +19,8 @@ class FullScreenPlayer extends StatelessWidget {
         if (song == null) return const SizedBox.shrink();
 
         final progress = (state.duration > Duration.zero)
-            ? state.position.inMilliseconds / state.duration.inMilliseconds
+            ? (state.position.inMilliseconds / state.duration.inMilliseconds)
+                  .clamp(0.0, 1.0)
             : 0.0;
 
         return Scaffold(
