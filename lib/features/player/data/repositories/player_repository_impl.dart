@@ -1,9 +1,9 @@
-import 'package:spotifly/features/player/data/datasources/youtube_audio_source.dart';
+import 'package:spotifly/features/player/data/datasources/audio_remote_data_source.dart';
 
 import '../../domain/repositories/player_repository.dart';
 
 class PlayerRepositoryImpl implements PlayerRepository {
-  final YoutubeAudioSource dataSource;
+  final AudioRemoteDataSource dataSource;
 
   PlayerRepositoryImpl(this.dataSource);
 
