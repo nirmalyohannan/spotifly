@@ -21,3 +21,21 @@ class SeekEvent extends PlayerEvent {
 
   SeekEvent(this.position);
 }
+
+class UpdatePositionEvent extends PlayerEvent {
+  final Duration position;
+
+  UpdatePositionEvent(this.position);
+}
+
+class UpdateDurationEvent extends PlayerEvent {
+  final Duration duration;
+
+  UpdateDurationEvent(this.duration);
+}
+
+class UpdateIsPlayingEvent extends PlayerEvent {
+  final bool isPlaying;
+
+  UpdateIsPlayingEvent(this.isPlaying);
+}

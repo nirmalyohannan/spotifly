@@ -45,6 +45,7 @@ dependencies:
   flutter_web_auth_2: ^5.0.0-alpha.7
   get_it: ^9.2.0
   rxdart: ^0.28.0
+  just_audio: ^0.10.5
 
 dev_dependencies:
   flutter_test:
