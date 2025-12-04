@@ -5,7 +5,7 @@ class GetAudioStream {
 
   GetAudioStream(this.repository);
 
-  Future<String> call(String videoId) async {
-    return await repository.getAudioStreamUrl(videoId);
+  Future<String> call(String songName, String artistName) async {
+    return await repository.getAudioStreamUrl(songName, artistName);
   }
 }

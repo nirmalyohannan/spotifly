@@ -1,3 +1,3 @@
 abstract class PlayerRepository {
-  Future<String> getAudioStreamUrl(String videoId);
+  Future<String> getAudioStreamUrl(String songName, String artistName);
 }

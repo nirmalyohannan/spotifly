@@ -1,14 +1,14 @@
-import 'package:spotifly/features/player/data/datasources/audio_remote_data_source.dart';
+import 'package:spotifly/features/player/data/datasources/youtube_remote_data_source.dart';
 
 import '../../domain/repositories/player_repository.dart';
 
 class PlayerRepositoryImpl implements PlayerRepository {
-  final AudioRemoteDataSource dataSource;
+  final YoutubeRemoteDataSource dataSource;
 
   PlayerRepositoryImpl(this.dataSource);
 
   @override
-  Future<String> getAudioStreamUrl(String videoId) async {
-    return await dataSource.getAudioStreamUrl(videoId);
+  Future<String> getAudioStreamUrl(String songName, String artistName) async {
+    return await dataSource.getAudioStreamUrl(songName, artistName);
   }
 }

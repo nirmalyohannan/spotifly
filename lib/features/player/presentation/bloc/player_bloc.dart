@@ -6,7 +6,6 @@ import 'package:spotifly/core/youtube_user_agent.dart';
 import 'package:spotifly/features/player/domain/usecases/get_audio_stream.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   final AudioPlayer _audioPlayer;
@@ -33,11 +32,11 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       emit(state.copyWith(currentSong: event.song, isPlaying: true));
 
       try {
-        // Use the mock video URL as requested
-        const mockVideoUrl = "https://www.youtube.com/watch?v=kffacxfA7G4";
-        final videoId = VideoId(mockVideoUrl);
-
-        final audioUrl = await _getAudioStream(videoId.value);
+        // Use the song metadata to find the audio stream
+        final audioUrl = await _getAudioStream(
+          event.song.title,
+          event.song.artist,
+        );
         await _audioPlayer.setUrl(audioUrl);
         _audioPlayer.play();
       } catch (e) {
