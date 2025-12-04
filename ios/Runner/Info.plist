@@ -45,5 +45,18 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>spotifly</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>spotifly</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

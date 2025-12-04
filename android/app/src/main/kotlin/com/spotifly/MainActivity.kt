@@ -1,4 +1,4 @@
-package com.example.spotifly
+package com.spotifly
 
 import io.flutter.embedding.android.FlutterActivity
 
