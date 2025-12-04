@@ -23,11 +23,14 @@ class MiniPlayer extends StatelessWidget {
 
         return GestureDetector(
           onTap: () {
+            final bgColor = const Color(0xFF8B0000);
             showModalBottomSheet(
               context: context,
               isScrollControlled: true,
+              useSafeArea: true,
+              barrierColor: bgColor,
               backgroundColor: Colors.transparent,
-              builder: (context) => const FullScreenPlayer(),
+              builder: (context) => FullScreenPlayer(backgroundColor: bgColor),
             );
           },
           child: Container(

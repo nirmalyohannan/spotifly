@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:spotifly/shared/data/repositories/playlist_repository_impl.dart';
 import '../../../../shared/domain/entities/playlist.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 
 class PlaylistDetailPage extends StatefulWidget {
   final Playlist playlist;
@@ -89,7 +92,7 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                         style: const TextStyle(color: Colors.grey),
                       ),
                       onTap: () {
-                        // Play song
+                        context.read<PlayerBloc>().add(SetSongEvent(song));
                       },
                     );
                   }, childCount: playlist.songs.length),

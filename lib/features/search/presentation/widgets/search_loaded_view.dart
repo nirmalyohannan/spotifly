@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:spotifly/features/library/presentation/pages/playlist_detail_page.dart';
 import 'package:spotifly/features/search/domain/entities/search_results.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 
 class SearchLoadedView extends StatelessWidget {
   final SearchResults results;
@@ -35,7 +38,7 @@ class SearchLoadedView extends StatelessWidget {
               title: Text(song.title),
               subtitle: Text(song.artist),
               onTap: () {
-                // Play song
+                context.read<PlayerBloc>().add(SetSongEvent(song));
               },
             ),
           ),
