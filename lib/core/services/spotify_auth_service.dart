@@ -1,13 +1,15 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:developer' as dev;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:http/http.dart' as http;
+import 'package:spotifly/credentials.dart';
 
 class SpotifyAuthService {
-  static const String _clientId = '684e09238b7a4ceca13e0d996785c111';
-  static const String _clientSecret = '5d04992d3b654bb98f90204371cd8dee';
-  static const String _redirectUri = 'spotifly://callback';
+  static const String _clientId = Credentials.clientId;
+  static const String _clientSecret = Credentials.clientSecret;
+  static const String _redirectUri = Credentials.redirectUri;
   static const String _scope =
       'user-read-private user-read-email playlist-read-private playlist-read-collaborative user-library-read user-top-read user-read-recently-played';
 
@@ -41,7 +43,7 @@ class SpotifyAuthService {
       }
       return false;
     } catch (e) {
-      print('Error authenticating: $e');
+      dev.log('Error authenticating: $e');
       return false;
     }
   }
