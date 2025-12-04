@@ -14,10 +14,36 @@ class LibraryPage extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: CircleAvatar(
-            backgroundImage: CachedNetworkImageProvider(
-              'https://i.pravatar.cc/150?img=5',
-            ), // Mock User
+            radius: 20,
             backgroundColor: Colors.grey,
+            child: ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: 'https://i.pravatar.cc/150?img=5',
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  width: 40,
+                  height: 40,
+                  color: Colors.grey,
+                  child: const Center(
+                    child: Icon(Icons.person, color: Colors.white70, size: 18),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  width: 40,
+                  height: 40,
+                  color: Colors.grey,
+                  child: const Center(
+                    child: Icon(
+                      Icons.person_outline,
+                      color: Colors.white70,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
         title: const Text(
@@ -126,8 +152,38 @@ class LibraryPage extends StatelessWidget {
                     subtitle: 'Artist',
                     leading: CircleAvatar(
                       radius: 25,
-                      backgroundImage: CachedNetworkImageProvider(
-                        artist.imageUrl,
+                      backgroundColor: Colors.grey,
+                      child: ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: artist.imageUrl,
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 50,
+                            height: 50,
+                            color: Colors.grey,
+                            child: const Center(
+                              child: Icon(
+                                Icons.person,
+                                color: Colors.white70,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            width: 50,
+                            height: 50,
+                            color: Colors.grey,
+                            child: const Center(
+                              child: Icon(
+                                Icons.person_outline,
+                                color: Colors.white70,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -144,6 +200,30 @@ class LibraryPage extends StatelessWidget {
                         width: 50,
                         height: 50,
                         fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          width: 50,
+                          height: 50,
+                          color: AppColors.surface,
+                          child: const Center(
+                            child: Icon(
+                              Icons.music_note,
+                              color: Colors.white70,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          width: 50,
+                          height: 50,
+                          color: AppColors.surface,
+                          child: const Center(
+                            child: Icon(
+                              Icons.error,
+                              color: Colors.white70,
+                              size: 18,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),

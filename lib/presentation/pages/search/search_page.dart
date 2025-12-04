@@ -194,7 +194,7 @@ class CategoryCard extends StatelessWidget {
               right: -15,
               bottom: 0,
               child: Transform.rotate(
-                angle: 0.4, // ~25 degrees
+                angle: 0.4,
                 child: Container(
                   width: 70,
                   height: 70,
@@ -206,9 +206,46 @@ class CategoryCard extends StatelessWidget {
                         offset: const Offset(0, 4),
                       ),
                     ],
-                    image: DecorationImage(
-                      image: CachedNetworkImageProvider(imageUrl),
-                      fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          if (imageUrl.isNotEmpty)
+            Positioned(
+              right: -15,
+              bottom: 0,
+              child: Transform.rotate(
+                angle: 0.4,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.zero,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 70,
+                      height: 70,
+                      color: Colors.black26,
+                      child: const Center(
+                        child: Icon(
+                          Icons.image,
+                          color: Colors.white70,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      width: 70,
+                      height: 70,
+                      color: Colors.black26,
+                      child: const Center(
+                        child: Icon(
+                          Icons.broken_image,
+                          color: Colors.white70,
+                          size: 18,
+                        ),
+                      ),
                     ),
                   ),
                 ),

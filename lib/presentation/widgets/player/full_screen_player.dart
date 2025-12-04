@@ -40,10 +40,6 @@ class FullScreenPlayer extends StatelessWidget {
               height: 350,
               width: 350,
               decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: CachedNetworkImageProvider(song.coverUrl),
-                  fit: BoxFit.cover,
-                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.5),
@@ -51,6 +47,35 @@ class FullScreenPlayer extends StatelessWidget {
                     offset: const Offset(0, 10),
                   ),
                 ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.zero,
+                child: CachedNetworkImage(
+                  imageUrl: song.coverUrl,
+                  width: 350,
+                  height: 350,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    width: 350,
+                    height: 350,
+                    color: Colors.black26,
+                    child: const Center(
+                      child: Icon(Icons.album, color: Colors.white70, size: 28),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    width: 350,
+                    height: 350,
+                    color: Colors.black26,
+                    child: const Center(
+                      child: Icon(
+                        Icons.broken_image,
+                        color: Colors.white70,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
             const Spacer(),
