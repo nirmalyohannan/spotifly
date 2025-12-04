@@ -2,13 +2,20 @@ import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart' hide PlayerState, PlayerEvent;
+import 'package:spotifly/core/youtube_user_agent.dart';
+import 'package:spotifly/features/player/domain/usecases/get_audio_stream.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   final AudioPlayer _audioPlayer;
+  final GetAudioStream _getAudioStream;
 
-  PlayerBloc() : _audioPlayer = AudioPlayer(), super(const PlayerState()) {
+  PlayerBloc({required GetAudioStream getAudioStream})
+    : _audioPlayer = AudioPlayer(userAgent: YoutubeUserAgent.userAgent),
+      _getAudioStream = getAudioStream,
+      super(const PlayerState()) {
     _setupStreams();
 
     on<PlayEvent>((event, emit) => _audioPlayer.play());
@@ -26,10 +33,12 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       emit(state.copyWith(currentSong: event.song, isPlaying: true));
 
       try {
-        // Play the mock URL as requested, regardless of the song
-        const mockUrl =
-            'https://filesamples.com/samples/audio/mp3/Symphony%20No.6%20(1st%20movement).mp3';
-        await _audioPlayer.setUrl(mockUrl);
+        // Use the mock video URL as requested
+        const mockVideoUrl = "https://www.youtube.com/watch?v=kffacxfA7G4";
+        final videoId = VideoId(mockVideoUrl);
+
+        final audioUrl = await _getAudioStream(videoId.value);
+        await _audioPlayer.setUrl(audioUrl);
         _audioPlayer.play();
       } catch (e) {
         // In a real app, we would handle errors properly
