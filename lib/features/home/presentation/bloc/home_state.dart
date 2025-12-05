@@ -13,17 +13,12 @@ class HomeLoading extends HomeState {}
 
 class HomeLoaded extends HomeState {
   final List<Song> recentlyPlayed;
-  final List<Playlist> featuredPlaylists;
   final List<Playlist> newReleases;
 
-  const HomeLoaded({
-    required this.recentlyPlayed,
-    required this.featuredPlaylists,
-    required this.newReleases,
-  });
+  const HomeLoaded({required this.recentlyPlayed, required this.newReleases});
 
   @override
-  List<Object> get props => [recentlyPlayed, featuredPlaylists, newReleases];
+  List<Object> get props => [recentlyPlayed, newReleases];
 }
 
 class HomeError extends HomeState {

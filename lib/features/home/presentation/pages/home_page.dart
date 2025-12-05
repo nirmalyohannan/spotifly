@@ -1,21 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/theme/app_colors.dart';
-import 'package:spotifly/features/home/data/repositories/home_repository_impl.dart';
+import 'package:spotifly/features/home/domain/repositories/home_repository.dart';
 import 'package:spotifly/features/home/presentation/bloc/home_bloc.dart';
-import 'package:spotifly/features/library/presentation/pages/playlist_detail_page.dart';
 import 'package:spotifly/shared/presentation/widgets/cards/music_card.dart';
 import 'package:spotifly/shared/presentation/widgets/horizontal_card_list.dart';
 import 'package:spotifly/shared/presentation/widgets/section_header.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return BlocProvider(
       create: (context) =>
-          HomeBloc(homeRepository: HomeRepositoryImpl())..add(LoadHomeData()),
+          HomeBloc(homeRepository: getIt<HomeRepository>())
+            ..add(LoadHomeData()),
       child: Scaffold(
         body: Container(
           decoration: const BoxDecoration(
@@ -76,35 +87,6 @@ class HomePage extends StatelessWidget {
                                     imageUrl: song.coverUrl,
                                     size: 120,
                                     onTap: () {},
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 24),
-                            ],
-
-                            // Featured Playlists
-                            if (state.featuredPlaylists.isNotEmpty) ...[
-                              const SectionHeader(title: 'Featured Playlists'),
-                              HorizontalCardList(
-                                items: state.featuredPlaylists,
-                                height: 200,
-                                itemBuilder: (context, playlist) {
-                                  return MusicCard(
-                                    title: playlist.title,
-                                    subtitle: playlist.creator,
-                                    imageUrl: playlist.coverUrl,
-                                    size: 150,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              PlaylistDetailPage(
-                                                playlist: playlist,
-                                              ),
-                                        ),
-                                      );
-                                    },
                                   );
                                 },
                               ),

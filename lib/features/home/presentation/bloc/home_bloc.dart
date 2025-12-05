@@ -21,15 +21,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(HomeLoading());
     try {
       final recentlyPlayed = await homeRepository.getRecentlyPlayed();
-      final featuredPlaylists = await homeRepository.getFeaturedPlaylists();
+
       final newReleases = await homeRepository.getNewReleases();
 
       emit(
-        HomeLoaded(
-          recentlyPlayed: recentlyPlayed,
-          featuredPlaylists: featuredPlaylists,
-          newReleases: newReleases,
-        ),
+        HomeLoaded(recentlyPlayed: recentlyPlayed, newReleases: newReleases),
       );
     } catch (e) {
       emit(HomeError(e.toString()));
