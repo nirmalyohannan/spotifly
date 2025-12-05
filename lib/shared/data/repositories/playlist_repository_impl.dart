@@ -10,6 +10,10 @@ import '../../domain/repositories/playlist_repository.dart';
 class PlaylistRepositoryImpl implements PlaylistRepository {
   final SpotifyApiClient _apiClient = getIt<SpotifyApiClient>();
 
+  // Cache
+  String? _cachedUserProfileImage;
+  List<Playlist>? _cachedPlaylists;
+
   @override
   Future<List<Song>> getLikedSongs() async {
     try {
@@ -60,10 +64,13 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   @override
   Future<List<Playlist>> getPlaylists() async {
+    if (_cachedPlaylists != null) {
+      return _cachedPlaylists!;
+    }
     try {
       final data = await _apiClient.getJson('/me/playlists');
       final items = data['items'] as List;
-      return items.map((item) {
+      _cachedPlaylists = items.map((item) {
         final spotifyPlaylist = SpotifyPlaylist.fromJson(item);
         return Playlist(
           id: spotifyPlaylist.id,
@@ -75,6 +82,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
           songs: [], // Tracks are not returned in the list endpoint
         );
       }).toList();
+      return _cachedPlaylists!;
     } catch (e) {
       log('Error fetching playlists: $e');
       return [];
@@ -83,11 +91,15 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   @override
   Future<String?> getUserProfileImage() async {
+    if (_cachedUserProfileImage != null) {
+      return _cachedUserProfileImage;
+    }
     try {
       final data = await _apiClient.getJson('/me');
       final images = data['images'] as List;
       if (images.isNotEmpty) {
-        return images.first['url'] as String;
+        _cachedUserProfileImage = images.first['url'] as String;
+        return _cachedUserProfileImage;
       }
       return null;
     } catch (e) {

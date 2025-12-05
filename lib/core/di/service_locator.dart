@@ -6,6 +6,8 @@ import 'package:spotifly/features/player/data/repositories/player_repository_imp
 import 'package:spotifly/features/player/domain/repositories/player_repository.dart';
 import 'package:spotifly/features/player/domain/usecases/get_audio_stream.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
+import 'package:spotifly/shared/data/repositories/playlist_repository_impl.dart';
 
 final getIt = GetIt.instance;
 
@@ -25,5 +27,10 @@ void setupServiceLocator() {
   );
   getIt.registerLazySingleton<GetAudioStream>(
     () => GetAudioStream(getIt<PlayerRepository>()),
+  );
+
+  // Library Feature
+  getIt.registerLazySingleton<PlaylistRepository>(
+    () => PlaylistRepositoryImpl(),
   );
 }

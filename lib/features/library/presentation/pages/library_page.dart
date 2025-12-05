@@ -1,30 +1,41 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/theme/app_colors.dart';
-import 'package:spotifly/shared/data/repositories/playlist_repository_impl.dart';
 import 'package:spotifly/features/library/presentation/bloc/library_view_cubit.dart';
 import 'package:spotifly/features/library/presentation/widgets/library_grid_view.dart';
 import 'package:spotifly/features/library/presentation/widgets/library_list_view.dart';
+import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
 import 'package:spotifly/shared/presentation/widgets/pill.dart';
 import '../bloc/playlist_bloc.dart';
 
-class LibraryPage extends StatelessWidget {
+class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
 
   @override
+  State<LibraryPage> createState() => _LibraryPageState();
+}
+
+class _LibraryPageState extends State<LibraryPage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (context) =>
-              PlaylistBloc(playlistRepository: PlaylistRepositoryImpl())
+              PlaylistBloc(playlistRepository: getIt<PlaylistRepository>())
                 ..add(LoadPlaylists()),
         ),
         BlocProvider(create: (context) => LibraryViewCubit()),
       ],
       child: Scaffold(
-        appBar: LibraryAppBar(),
+        appBar: const LibraryAppBar(),
         body: Column(
           children: [
             // Filter Pills
