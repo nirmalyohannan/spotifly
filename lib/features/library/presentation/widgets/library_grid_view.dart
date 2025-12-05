@@ -5,6 +5,7 @@ import 'package:spotifly/core/theme/app_colors.dart';
 import 'package:spotifly/features/library/presentation/bloc/playlist_bloc.dart';
 import 'package:spotifly/features/library/presentation/pages/liked_songs_page.dart';
 import 'package:spotifly/features/library/presentation/pages/playlist_detail_page.dart';
+import 'package:spotifly/features/library/presentation/widgets/library_grid_item.dart';
 import 'package:spotifly/shared/data/repositories/playlist_repository_impl.dart';
 import 'package:spotifly/shared/domain/entities/playlist.dart';
 
@@ -29,46 +30,14 @@ class LibraryGridView extends StatelessWidget {
       itemCount: totalItems,
       itemBuilder: (context, index) {
         if (index == 0) {
-          return _buildGridItem(
-            context,
+          return LibraryGridItem(
             title: 'Liked Songs',
             subtitle: 'Playlist • 58 songs',
-            image: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF450AF5), Color(0xFFC4EFDA)],
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Center(
-                child: Icon(Icons.favorite, color: Colors.white, size: 40),
-              ),
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BlocProvider.value(
-                    value: context.read<PlaylistBloc>(),
-                    child: FutureBuilder(
-                      future: PlaylistRepositoryImpl().getLikedSongs(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return LikedSongsPage(songs: snapshot.data!);
-                        }
-                        return const Center(child: CircularProgressIndicator());
-                      },
-                    ),
-                  ),
-                ),
-              );
-            },
+            image: _LikedSongsCover(),
+            onTap: () => _onTapLikedSongs(context),
           );
         } else if (index == 1) {
-          return _buildGridItem(
-            context,
+          return LibraryGridItem(
             title: 'New Episodes',
             subtitle: 'Updated 2 days ago',
             image: Container(
@@ -88,81 +57,92 @@ class LibraryGridView extends StatelessWidget {
           );
         } else {
           final playlist = playlists[index - 2];
-          return _buildGridItem(
-            context,
+          return LibraryGridItem(
             title: playlist.title,
             subtitle: 'Playlist • ${playlist.creator}',
-            image: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: playlist.coverUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: AppColors.surface,
-                  child: const Center(
-                    child: Icon(
-                      Icons.music_note,
-                      color: Colors.white70,
-                      size: 30,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: AppColors.surface,
-                  child: const Center(
-                    child: Icon(Icons.error, color: Colors.white70, size: 30),
-                  ),
-                ),
-              ),
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PlaylistDetailPage(playlist: playlist),
-                ),
-              );
-            },
+            image: _PlaylistCover(playlist: playlist),
+            onTap: () => _onTapPlaylist(context, playlist),
           );
         }
       },
     );
   }
 
-  Widget _buildGridItem(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required Widget image,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: SizedBox(width: double.infinity, child: image),
+  void _onTapPlaylist(BuildContext context, Playlist playlist) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PlaylistDetailPage(playlist: playlist),
+      ),
+    );
+  }
+
+  void _onTapLikedSongs(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: context.read<PlaylistBloc>(),
+          child: FutureBuilder(
+            future: PlaylistRepositoryImpl().getLikedSongs(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return LikedSongsPage(songs: snapshot.data!);
+              }
+              return const Center(child: CircularProgressIndicator());
+            },
           ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              fontSize: 14,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+}
+
+class _PlaylistCover extends StatelessWidget {
+  const _PlaylistCover({required this.playlist});
+
+  final Playlist playlist;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: CachedNetworkImage(
+        imageUrl: playlist.coverUrl,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          color: AppColors.surface,
+          child: const Center(
+            child: Icon(Icons.music_note, color: Colors.white70, size: 30),
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: AppColors.surface,
+          child: const Center(
+            child: Icon(Icons.error, color: Colors.white70, size: 30),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LikedSongsCover extends StatelessWidget {
+  const _LikedSongsCover();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF450AF5), Color(0xFFC4EFDA)],
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Center(
+        child: Icon(Icons.favorite, color: Colors.white, size: 40),
       ),
     );
   }
