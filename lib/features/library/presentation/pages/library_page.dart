@@ -3,19 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/core/theme/app_colors.dart';
 import 'package:spotifly/shared/data/repositories/playlist_repository_impl.dart';
+import 'package:spotifly/features/library/presentation/bloc/library_view_cubit.dart';
+import 'package:spotifly/features/library/presentation/widgets/library_grid_view.dart';
+import 'package:spotifly/features/library/presentation/widgets/library_list_view.dart';
 import '../bloc/playlist_bloc.dart';
-import 'liked_songs_page.dart';
-import 'playlist_detail_page.dart';
 
 class LibraryPage extends StatelessWidget {
   const LibraryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) =>
-          PlaylistBloc(playlistRepository: PlaylistRepositoryImpl())
-            ..add(LoadPlaylists()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) =>
+              PlaylistBloc(playlistRepository: PlaylistRepositoryImpl())
+                ..add(LoadPlaylists()),
+        ),
+        BlocProvider(create: (context) => LibraryViewCubit()),
+      ],
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: AppColors.background,
@@ -113,143 +119,58 @@ class LibraryPage extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  const Icon(Icons.grid_view, size: 16, color: Colors.white),
+                  BlocBuilder<LibraryViewCubit, LibraryViewMode>(
+                    builder: (context, mode) {
+                      return IconButton(
+                        icon: Icon(
+                          mode == LibraryViewMode.list
+                              ? Icons.grid_view
+                              : Icons.list,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          context.read<LibraryViewCubit>().toggleViewMode();
+                        },
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
 
-            // List
+            // List / Grid
             Expanded(
               child: BlocBuilder<PlaylistBloc, PlaylistState>(
-                builder: (context, state) {
-                  if (state is PlaylistLoading) {
+                builder: (context, playlistState) {
+                  if (playlistState is PlaylistLoading) {
                     return const Center(child: CircularProgressIndicator());
-                  } else if (state is PlaylistLoaded) {
-                    return ListView(
-                      children: [
-                        _buildListItem(
-                          context,
-                          title: 'Liked Songs',
-                          subtitle: 'Playlist • 58 songs',
-                          leading: Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [Color(0xFF450AF5), Color(0xFFC4EFDA)],
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.favorite,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => BlocProvider.value(
-                                  value: context.read<PlaylistBloc>(),
-                                  child: FutureBuilder(
-                                    future: PlaylistRepositoryImpl()
-                                        .getLikedSongs(),
-                                    builder: (context, snapshot) {
-                                      if (snapshot.hasData) {
-                                        return LikedSongsPage(
-                                          songs: snapshot.data!,
-                                        );
-                                      }
-                                      return const Center(
-                                        child: CircularProgressIndicator(),
-                                      );
-                                    },
-                                  ),
+                  } else if (playlistState is PlaylistLoaded) {
+                    return BlocBuilder<LibraryViewCubit, LibraryViewMode>(
+                      builder: (context, viewMode) {
+                        return AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                );
+                              },
+                          child: viewMode == LibraryViewMode.list
+                              ? LibraryListView(
+                                  key: const ValueKey('List'),
+                                  playlists: playlistState.playlists,
+                                )
+                              : LibraryGridView(
+                                  key: const ValueKey('Grid'),
+                                  playlists: playlistState.playlists,
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildListItem(
-                          context,
-                          title: 'New Episodes',
-                          subtitle: 'Updated 2 days ago',
-                          leading: Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF006450),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.notifications,
-                                color: Colors.greenAccent,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          onTap: () {},
-                        ),
-                        ...state.playlists.map(
-                          (playlist) => _buildListItem(
-                            context,
-                            title: playlist.title,
-                            subtitle: 'Playlist • ${playlist.creator}',
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: CachedNetworkImage(
-                                imageUrl: playlist.coverUrl,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  width: 50,
-                                  height: 50,
-                                  color: AppColors.surface,
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.music_note,
-                                      color: Colors.white70,
-                                      size: 18,
-                                    ),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  width: 50,
-                                  height: 50,
-                                  color: AppColors.surface,
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.error,
-                                      color: Colors.white70,
-                                      size: 18,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      PlaylistDetailPage(playlist: playlist),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 100),
-                      ],
+                        );
+                      },
                     );
-                  } else if (state is PlaylistError) {
-                    return Center(child: Text(state.message));
+                  } else if (playlistState is PlaylistError) {
+                    return Center(child: Text(playlistState.message));
                   }
                   return const SizedBox();
                 },
@@ -273,31 +194,6 @@ class LibraryPage extends StatelessWidget {
         text,
         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
       ),
-    );
-  }
-
-  Widget _buildListItem(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required Widget leading,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: leading,
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: const TextStyle(color: Colors.grey, fontSize: 13),
-      ),
-      onTap: onTap,
     );
   }
 }
