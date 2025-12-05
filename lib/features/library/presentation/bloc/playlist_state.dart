@@ -13,11 +13,12 @@ class PlaylistLoading extends PlaylistState {}
 
 class PlaylistLoaded extends PlaylistState {
   final List<Playlist> playlists;
+  final String? userProfileImage;
 
-  const PlaylistLoaded(this.playlists);
+  const PlaylistLoaded(this.playlists, {this.userProfileImage});
 
   @override
-  List<Object> get props => [playlists];
+  List<Object> get props => [playlists, userProfileImage ?? ''];
 }
 
 class LikedSongsLoaded extends PlaylistState {

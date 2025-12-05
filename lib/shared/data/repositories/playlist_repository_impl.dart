@@ -81,6 +81,21 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     }
   }
 
+  @override
+  Future<String?> getUserProfileImage() async {
+    try {
+      final data = await _apiClient.getJson('/me');
+      final images = data['images'] as List;
+      if (images.isNotEmpty) {
+        return images.first['url'] as String;
+      }
+      return null;
+    } catch (e) {
+      log('Error fetching user profile: $e');
+      return null;
+    }
+  }
+
   Song _mapSpotifyTrackToSong(SpotifyTrack track) {
     return Song(
       id: track.id,

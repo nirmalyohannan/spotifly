@@ -21,41 +21,50 @@ class LibraryPage extends StatelessWidget {
           backgroundColor: AppColors.background,
           leading: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.grey,
-              child: ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: 'https://i.pravatar.cc/150?img=5',
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey,
-                    child: const Center(
-                      child: Icon(
-                        Icons.person,
-                        color: Colors.white70,
-                        size: 18,
+            child: BlocBuilder<PlaylistBloc, PlaylistState>(
+              builder: (context, state) {
+                String? imageUrl;
+                if (state is PlaylistLoaded) {
+                  imageUrl = state.userProfileImage;
+                }
+                return CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.grey,
+                  child: ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl:
+                          imageUrl ?? 'https://avatar.iran.liara.run/public/7',
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        width: 40,
+                        height: 40,
+                        color: Colors.grey,
+                        child: const Center(
+                          child: Icon(
+                            Icons.person,
+                            color: Colors.white70,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        width: 40,
+                        height: 40,
+                        color: Colors.grey,
+                        child: const Center(
+                          child: Icon(
+                            Icons.person_outline,
+                            color: Colors.white70,
+                            size: 18,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey,
-                    child: const Center(
-                      child: Icon(
-                        Icons.person_outline,
-                        color: Colors.white70,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+                );
+              },
             ),
           ),
           title: const Text(

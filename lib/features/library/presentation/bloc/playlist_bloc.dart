@@ -22,7 +22,8 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
     emit(PlaylistLoading());
     try {
       final playlists = await playlistRepository.getPlaylists();
-      emit(PlaylistLoaded(playlists));
+      final userProfileImage = await playlistRepository.getUserProfileImage();
+      emit(PlaylistLoaded(playlists, userProfileImage: userProfileImage));
     } catch (e) {
       emit(PlaylistError(e.toString()));
     }
