@@ -6,6 +6,7 @@ import 'package:spotifly/shared/data/repositories/playlist_repository_impl.dart'
 import 'package:spotifly/features/library/presentation/bloc/library_view_cubit.dart';
 import 'package:spotifly/features/library/presentation/widgets/library_grid_view.dart';
 import 'package:spotifly/features/library/presentation/widgets/library_list_view.dart';
+import 'package:spotifly/shared/presentation/widgets/pill.dart';
 import '../bloc/playlist_bloc.dart';
 
 class LibraryPage extends StatelessWidget {
@@ -23,65 +24,7 @@ class LibraryPage extends StatelessWidget {
         BlocProvider(create: (context) => LibraryViewCubit()),
       ],
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          leading: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: BlocBuilder<PlaylistBloc, PlaylistState>(
-              builder: (context, state) {
-                String? imageUrl;
-                if (state is PlaylistLoaded) {
-                  imageUrl = state.userProfileImage;
-                }
-                return CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.grey,
-                  child: ClipOval(
-                    child: CachedNetworkImage(
-                      imageUrl:
-                          imageUrl ?? 'https://avatar.iran.liara.run/public/7',
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        width: 40,
-                        height: 40,
-                        color: Colors.grey,
-                        child: const Center(
-                          child: Icon(
-                            Icons.person,
-                            color: Colors.white70,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        width: 40,
-                        height: 40,
-                        color: Colors.grey,
-                        child: const Center(
-                          child: Icon(
-                            Icons.person_outline,
-                            color: Colors.white70,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          title: const Text(
-            'Your Library',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-          ),
-          actions: [
-            IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-            IconButton(icon: const Icon(Icons.add), onPressed: () {}),
-          ],
-        ),
+        appBar: LibraryAppBar(),
         body: Column(
           children: [
             // Filter Pills
@@ -90,13 +33,13 @@ class LibraryPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  _buildPill('Playlists'),
+                  Pill('Playlists'),
                   const SizedBox(width: 8),
-                  _buildPill('Artists'),
+                  Pill('Artists'),
                   const SizedBox(width: 8),
-                  _buildPill('Albums'),
+                  Pill('Albums'),
                   const SizedBox(width: 8),
-                  _buildPill('Podcasts & shows'),
+                  Pill('Podcasts & shows'),
                 ],
               ),
             ),
@@ -181,19 +124,74 @@ class LibraryPage extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildPill(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[800]!),
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.transparent,
+class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const LibraryAppBar({super.key});
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      backgroundColor: AppColors.background,
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: BlocBuilder<PlaylistBloc, PlaylistState>(
+          builder: (context, state) {
+            String? imageUrl;
+            if (state is PlaylistLoaded) {
+              imageUrl = state.userProfileImage;
+            }
+            return CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.grey,
+              child: ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl:
+                      imageUrl ?? 'https://avatar.iran.liara.run/public/7',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    width: 40,
+                    height: 40,
+                    color: Colors.grey,
+                    child: const Center(
+                      child: Icon(
+                        Icons.person,
+                        color: Colors.white70,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    width: 40,
+                    height: 40,
+                    color: Colors.grey,
+                    child: const Center(
+                      child: Icon(
+                        Icons.person_outline,
+                        color: Colors.white70,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+      title: const Text(
+        'Your Library',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
       ),
+      actions: [
+        IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+        IconButton(icon: const Icon(Icons.add), onPressed: () {}),
+      ],
     );
   }
 }
