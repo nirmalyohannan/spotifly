@@ -44,4 +44,74 @@ class SpotifyApiClient {
       );
     }
   }
+
+  Future<http.Response> put(String endpoint, {dynamic body}) async {
+    final token = await _authService.getAccessToken();
+    if (token == null) {
+      throw Exception('Not authenticated');
+    }
+
+    final response = await _client.put(
+      Uri.parse('$_baseUrl$endpoint'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: body != null ? jsonEncode(body) : null,
+    );
+
+    if (response.statusCode == 401) {
+      final newToken = await _authService.getAccessToken();
+      if (newToken != null) {
+        return await _client.put(
+          Uri.parse('$_baseUrl$endpoint'),
+          headers: {
+            'Authorization': 'Bearer $newToken',
+            'Content-Type': 'application/json',
+          },
+          body: body != null ? jsonEncode(body) : null,
+        );
+      }
+    }
+    return response;
+  }
+
+  Future<http.Response> delete(String endpoint, {dynamic body}) async {
+    final token = await _authService.getAccessToken();
+    if (token == null) {
+      throw Exception('Not authenticated');
+    }
+
+    final request = http.Request('DELETE', Uri.parse('$_baseUrl$endpoint'));
+    request.headers.addAll({
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    });
+    if (body != null) {
+      request.body = jsonEncode(body);
+    }
+
+    final streamedResponse = await _client.send(request);
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 401) {
+      final newToken = await _authService.getAccessToken();
+      if (newToken != null) {
+        final requestRetry = http.Request(
+          'DELETE',
+          Uri.parse('$_baseUrl$endpoint'),
+        );
+        requestRetry.headers.addAll({
+          'Authorization': 'Bearer $newToken',
+          'Content-Type': 'application/json',
+        });
+        if (body != null) {
+          requestRetry.body = jsonEncode(body);
+        }
+        final streamedRetry = await _client.send(requestRetry);
+        return await http.Response.fromStream(streamedRetry);
+      }
+    }
+    return response;
+  }
 }

@@ -39,3 +39,10 @@ class UpdateIsPlayingEvent extends PlayerEvent {
 
   UpdateIsPlayingEvent(this.isPlaying);
 }
+
+class ToggleLikeStatus extends PlayerEvent {}
+
+class CheckLikedStatus extends PlayerEvent {
+  final String songId;
+  CheckLikedStatus(this.songId);
+}

@@ -15,6 +15,12 @@ class HomeRepositoryImpl implements HomeRepository {
   List<Song>? _cachedRecentlyPlayed;
 
   @override
+  void clearCache() {
+    _cachedNewReleases = null;
+    _cachedRecentlyPlayed = null;
+  }
+
+  @override
   Future<List<Playlist>> getNewReleases() async {
     if (_cachedNewReleases != null) {
       return _cachedNewReleases!;

@@ -3,18 +3,31 @@ import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart' hide PlayerState, PlayerEvent;
 import 'package:spotifly/core/youtube_user_agent.dart';
+import 'package:spotifly/features/player/domain/usecases/add_song_to_liked.dart';
 import 'package:spotifly/features/player/domain/usecases/get_audio_stream.dart';
+import 'package:spotifly/features/player/domain/usecases/is_song_liked.dart';
+import 'package:spotifly/features/player/domain/usecases/remove_song_from_liked.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
 
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   final AudioPlayer _audioPlayer;
   final GetAudioStream _getAudioStream;
+  final AddSongToLiked _addSongToLiked;
+  final RemoveSongFromLiked _removeSongFromLiked;
+  final IsSongLiked _isSongLiked;
 
-  PlayerBloc({required GetAudioStream getAudioStream})
-    : _audioPlayer = AudioPlayer(userAgent: YoutubeUserAgent.userAgent),
-      _getAudioStream = getAudioStream,
-      super(const PlayerState()) {
+  PlayerBloc({
+    required GetAudioStream getAudioStream,
+    required AddSongToLiked addSongToLiked,
+    required RemoveSongFromLiked removeSongFromLiked,
+    required IsSongLiked isSongLiked,
+  }) : _audioPlayer = AudioPlayer(userAgent: YoutubeUserAgent.userAgent),
+       _getAudioStream = getAudioStream,
+       _addSongToLiked = addSongToLiked,
+       _removeSongFromLiked = removeSongFromLiked,
+       _isSongLiked = isSongLiked,
+       super(const PlayerState()) {
     _setupStreams();
 
     on<PlayEvent>((event, emit) => _audioPlayer.play());
@@ -27,9 +40,38 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       }
     });
 
+    on<CheckLikedStatus>((event, emit) async {
+      try {
+        final isLiked = await _isSongLiked(event.songId);
+        emit(state.copyWith(isLiked: isLiked));
+      } catch (e) {
+        log("Error checking liked status: $e");
+      }
+    });
+
+    on<ToggleLikeStatus>((event, emit) async {
+      final song = state.currentSong;
+      if (song == null) return;
+
+      try {
+        if (state.isLiked) {
+          await _removeSongFromLiked(song.id);
+          emit(
+            state.copyWith(isLiked: false, message: "Removed from Liked Songs"),
+          );
+        } else {
+          await _addSongToLiked(song.id);
+          emit(state.copyWith(isLiked: true, message: "Added to Liked Songs"));
+        }
+      } catch (e) {
+        log("Error toggling like status: $e");
+      }
+    });
+
     on<SetSongEvent>((event, emit) async {
       // Update metadata immediately
       emit(state.copyWith(currentSong: event.song, isPlaying: true));
+      add(CheckLikedStatus(event.song.id));
 
       try {
         // Use the song metadata to find the audio stream

@@ -15,6 +15,12 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   List<Playlist>? _cachedPlaylists;
 
   @override
+  void clearCache() {
+    _cachedUserProfileImage = null;
+    _cachedPlaylists = null;
+  }
+
+  @override
   Future<List<Song>> getLikedSongs() async {
     try {
       final data = await _apiClient.getJson('/me/tracks?limit=50');
@@ -105,6 +111,58 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     } catch (e) {
       log('Error fetching user profile: $e');
       return null;
+    }
+  }
+
+  @override
+  Future<void> addSongToLiked(String songId) async {
+    try {
+      var response = await _apiClient.put(
+        '/me/tracks',
+        body: {
+          "ids": [songId],
+        },
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to add song to liked');
+      }
+    } catch (e) {
+      log('Error adding song to liked: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> removeSongFromLiked(String songId) async {
+    try {
+      var response = await _apiClient.delete(
+        '/me/tracks',
+        body: {
+          "ids": [songId],
+        },
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to remove song from liked');
+      }
+    } catch (e) {
+      log('Error removing song from liked: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> isSongLiked(String songId) async {
+    try {
+      final response = await _apiClient.getJson(
+        '/me/tracks/contains?ids=$songId',
+      );
+      if (response is List && response.isNotEmpty) {
+        return response.first as bool;
+      }
+      return false;
+    } catch (e) {
+      log('Error checking if song is liked: $e');
+      return false;
     }
   }
 

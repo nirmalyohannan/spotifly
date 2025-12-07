@@ -6,10 +6,18 @@ import 'package:spotifly/features/player/data/repositories/player_repository_imp
 import 'package:spotifly/features/player/domain/repositories/player_repository.dart';
 import 'package:spotifly/features/player/domain/usecases/get_audio_stream.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:spotifly/features/player/domain/usecases/add_song_to_liked.dart';
+import 'package:spotifly/features/player/domain/usecases/remove_song_from_liked.dart';
+import 'package:spotifly/features/player/domain/usecases/is_song_liked.dart';
 import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
 import 'package:spotifly/shared/data/repositories/playlist_repository_impl.dart';
 import 'package:spotifly/features/home/domain/repositories/home_repository.dart';
 import 'package:spotifly/features/home/data/repositories/home_repository_impl.dart';
+import 'package:spotifly/features/settings/data/repositories/settings_repository_impl.dart';
+import 'package:spotifly/features/settings/domain/repositories/settings_repository.dart';
+import 'package:spotifly/features/settings/domain/usecases/get_user_profile.dart';
+import 'package:spotifly/features/settings/domain/usecases/logout_user.dart';
+import 'package:spotifly/features/settings/presentation/bloc/settings_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -30,6 +38,15 @@ void setupServiceLocator() {
   getIt.registerLazySingleton<GetAudioStream>(
     () => GetAudioStream(getIt<PlayerRepository>()),
   );
+  getIt.registerLazySingleton<AddSongToLiked>(
+    () => AddSongToLiked(getIt<PlaylistRepository>()),
+  );
+  getIt.registerLazySingleton<RemoveSongFromLiked>(
+    () => RemoveSongFromLiked(getIt<PlaylistRepository>()),
+  );
+  getIt.registerLazySingleton<IsSongLiked>(
+    () => IsSongLiked(getIt<PlaylistRepository>()),
+  );
 
   // Library Feature
   getIt.registerLazySingleton<PlaylistRepository>(
@@ -38,4 +55,25 @@ void setupServiceLocator() {
 
   // Home Feature
   getIt.registerLazySingleton<HomeRepository>(() => HomeRepositoryImpl());
+
+  // Settings Feature
+  getIt.registerLazySingleton<SettingsRepository>(
+    () => SettingsRepositoryImpl(),
+  );
+  getIt.registerLazySingleton<GetUserProfile>(
+    () => GetUserProfile(getIt<SettingsRepository>()),
+  );
+  getIt.registerLazySingleton<LogoutUser>(
+    () => LogoutUser(
+      authService: getIt<SpotifyAuthService>(),
+      playlistRepository: getIt<PlaylistRepository>(),
+      homeRepository: getIt<HomeRepository>(),
+    ),
+  );
+  getIt.registerFactory<SettingsBloc>(
+    () => SettingsBloc(
+      getUserProfile: getIt<GetUserProfile>(),
+      logoutUser: getIt<LogoutUser>(),
+    ),
+  );
 }

@@ -4,28 +4,36 @@ import 'package:spotifly/shared/domain/entities/song.dart';
 @immutable
 class PlayerState {
   final Song? currentSong;
+  final bool isLiked;
   final bool isPlaying;
   final Duration position;
   final Duration duration;
+  final String? message;
 
   const PlayerState({
     this.currentSong,
+    this.isLiked = false,
     this.isPlaying = false,
     this.position = Duration.zero,
     this.duration = Duration.zero,
+    this.message,
   });
 
   PlayerState copyWith({
     Song? currentSong,
+    bool? isLiked,
     bool? isPlaying,
     Duration? position,
     Duration? duration,
+    String? message,
   }) {
     return PlayerState(
       currentSong: currentSong ?? this.currentSong,
+      isLiked: isLiked ?? this.isLiked,
       isPlaying: isPlaying ?? this.isPlaying,
       position: position ?? this.position,
       duration: duration ?? this.duration,
+      message: message ?? this.message,
     );
   }
 }

@@ -11,7 +11,7 @@ class SpotifyAuthService {
   static const String _clientSecret = Credentials.clientSecret;
   static const String _redirectUri = Credentials.redirectUri;
   static const String _scope =
-      'user-read-private user-read-email playlist-read-private playlist-read-collaborative user-library-read user-top-read user-read-recently-played';
+      'user-read-private user-read-email playlist-read-private playlist-read-collaborative user-library-read user-top-read user-read-recently-played playlist-modify-public playlist-modify-private user-library-modify';
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 

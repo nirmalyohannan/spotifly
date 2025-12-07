@@ -5,4 +5,5 @@ abstract class HomeRepository {
   Future<List<Song>> getRecentlyPlayed();
   Future<List<Playlist>>
   getNewReleases(); // Mapping albums to playlists for simplicity in UI
+  void clearCache();
 }

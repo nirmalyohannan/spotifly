@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/core/di/service_locator.dart';
@@ -8,6 +7,7 @@ import 'package:spotifly/features/library/presentation/widgets/library_grid_view
 import 'package:spotifly/features/library/presentation/widgets/library_list_view.dart';
 import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
 import 'package:spotifly/shared/presentation/widgets/pill.dart';
+import 'package:spotifly/features/settings/presentation/pages/settings_page.dart';
 import '../bloc/playlist_bloc.dart';
 
 class LibraryPage extends StatefulWidget {
@@ -147,52 +147,30 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: AppColors.background,
-      leading: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: BlocBuilder<PlaylistBloc, PlaylistState>(
-          builder: (context, state) {
-            String? imageUrl;
-            if (state is PlaylistLoaded) {
-              imageUrl = state.userProfileImage;
-            }
-            return CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.grey,
-              child: ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl:
-                      imageUrl ?? 'https://avatar.iran.liara.run/public/7',
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey,
-                    child: const Center(
-                      child: Icon(
-                        Icons.person,
-                        color: Colors.white70,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.grey,
-                    child: const Center(
-                      child: Icon(
-                        Icons.person_outline,
-                        color: Colors.white70,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
+      leading: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SettingsPage()),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: FutureBuilder<String?>(
+            future: getIt<PlaylistRepository>().getUserProfileImage(),
+            builder: (context, snapshot) {
+              final imageUrl = snapshot.data;
+              return CircleAvatar(
+                backgroundColor: Colors.grey[800],
+                backgroundImage: imageUrl != null
+                    ? NetworkImage(imageUrl)
+                    : null,
+                child: imageUrl == null
+                    ? const Icon(Icons.person, color: Colors.white)
+                    : null,
+              );
+            },
+          ),
         ),
       ),
       title: const Text(
