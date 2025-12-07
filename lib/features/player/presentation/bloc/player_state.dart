@@ -8,6 +8,7 @@ class PlayerState {
   final bool isPlaying;
   final Duration position;
   final Duration duration;
+  final bool isInitialBuffer;
   final String? message;
 
   const PlayerState({
@@ -16,6 +17,7 @@ class PlayerState {
     this.isPlaying = false,
     this.position = Duration.zero,
     this.duration = Duration.zero,
+    this.isInitialBuffer = false,
     this.message,
   });
 
@@ -26,6 +28,7 @@ class PlayerState {
     Duration? position,
     Duration? duration,
     String? message,
+    bool? isInitialBuffer,
   }) {
     return PlayerState(
       currentSong: currentSong ?? this.currentSong,
@@ -33,6 +36,7 @@ class PlayerState {
       isPlaying: isPlaying ?? this.isPlaying,
       position: position ?? this.position,
       duration: duration ?? this.duration,
+      isInitialBuffer: isInitialBuffer ?? this.isInitialBuffer,
       message: message ?? this.message,
     );
   }

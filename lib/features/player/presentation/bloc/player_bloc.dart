@@ -70,7 +70,13 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
     on<SetSongEvent>((event, emit) async {
       // Update metadata immediately
-      emit(state.copyWith(currentSong: event.song, isPlaying: true));
+      emit(
+        state.copyWith(
+          currentSong: event.song,
+          isPlaying: true,
+          isInitialBuffer: true,
+        ),
+      );
       add(CheckLikedStatus(event.song.id));
 
       try {
@@ -80,6 +86,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
           event.song.artist,
         );
         await _audioPlayer.setUrl(audioUrl);
+        emit(state.copyWith(isInitialBuffer: false));
         _audioPlayer.play();
       } catch (e) {
         // In a real app, we would handle errors properly

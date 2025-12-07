@@ -57,14 +57,27 @@ class MiniPlayer extends StatelessWidget {
                         ), // Devices
                         onPressed: () {},
                       ),
-                      IconButton(
-                        icon: Icon(
-                          state.isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.white,
+                      SizedBox(
+                        height: 50,
+                        width: 50,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 500),
+                          child: state.isInitialBuffer
+                              ? const CircularProgressIndicator()
+                              : IconButton(
+                                  icon: Icon(
+                                    state.isPlaying
+                                        ? Icons.pause
+                                        : Icons.play_arrow,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    context.read<PlayerBloc>().add(
+                                      TogglePlayEvent(),
+                                    );
+                                  },
+                                ),
                         ),
-                        onPressed: () {
-                          context.read<PlayerBloc>().add(TogglePlayEvent());
-                        },
                       ),
                     ],
                   ),

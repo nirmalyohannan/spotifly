@@ -2,10 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
-import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
 import 'package:spotifly/features/player/presentation/widgets/player_album_art.dart';
 import 'package:spotifly/features/player/presentation/widgets/player_appbar.dart';
+import 'package:spotifly/features/player/presentation/widgets/player_play_button.dart';
 import 'package:spotifly/features/player/presentation/widgets/player_progress_bar.dart';
 import 'package:spotifly/features/player/presentation/widgets/player_progress_time_row.dart';
 import 'package:spotifly/features/player/presentation/widgets/player_title_and_artist.dart';
@@ -71,22 +71,11 @@ class FullScreenPlayer extends StatelessWidget {
                           color: Colors.white,
                           onPressed: () {},
                         ),
-                        Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              state.isPlaying ? Icons.pause : Icons.play_arrow,
-                            ),
-                            color: Colors.black,
-                            iconSize: 32,
-                            onPressed: () => context.read<PlayerBloc>().add(
-                              TogglePlayEvent(),
-                            ),
-                          ),
+                        PlayerPlayButton(
+                          isPlaying: state.isPlaying,
+                          isInitialBuffer: state.isInitialBuffer,
                         ),
+
                         IconButton(
                           icon: const Icon(Icons.skip_next, size: 36),
                           color: Colors.white,
