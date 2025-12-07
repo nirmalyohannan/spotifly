@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/core/theme/app_colors.dart';
+import 'package:spotifly/core/utils/flight_shuttle_builder.dart';
 import 'package:spotifly/features/library/presentation/bloc/playlist_bloc.dart';
 import 'package:spotifly/features/library/presentation/pages/liked_songs_page.dart';
 import 'package:spotifly/features/library/presentation/pages/playlist_detail_page.dart';
@@ -115,27 +116,31 @@ class _TileCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
-      child: CachedNetworkImage(
-        imageUrl: playlist.coverUrl,
-        width: 50,
-        height: 50,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
+    return Hero(
+      tag: playlist.id,
+      flightShuttleBuilder: FlightShuttleBuilders.fadeTransition,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: CachedNetworkImage(
+          imageUrl: playlist.coverUrl,
           width: 50,
           height: 50,
-          color: AppColors.surface,
-          child: const Center(
-            child: Icon(Icons.music_note, color: Colors.white70, size: 18),
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            width: 50,
+            height: 50,
+            color: AppColors.surface,
+            child: const Center(
+              child: Icon(Icons.music_note, color: Colors.white70, size: 18),
+            ),
           ),
-        ),
-        errorWidget: (context, url, error) => Container(
-          width: 50,
-          height: 50,
-          color: AppColors.surface,
-          child: const Center(
-            child: Icon(Icons.error, color: Colors.white70, size: 18),
+          errorWidget: (context, url, error) => Container(
+            width: 50,
+            height: 50,
+            color: AppColors.surface,
+            child: const Center(
+              child: Icon(Icons.error, color: Colors.white70, size: 18),
+            ),
           ),
         ),
       ),

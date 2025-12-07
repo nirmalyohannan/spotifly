@@ -15,7 +15,7 @@ class MiniPlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Hero(
       tag: 'mini_player',
-      flightShuttleBuilder: flightShuttleBuilder,
+      flightShuttleBuilder: FlightShuttleBuilders.fadeTransition,
       child: BlocBuilder<PlayerBloc, PlayerState>(
         builder: (context, state) {
           final song = state.currentSong;

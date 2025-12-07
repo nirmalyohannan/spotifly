@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:spotifly/core/utils/flight_shuttle_builder.dart';
 import 'package:spotifly/shared/data/repositories/playlist_repository_impl.dart';
 import '../../../../shared/domain/entities/playlist.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,18 +48,24 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                     pinned: true,
                     flexibleSpace: FlexibleSpaceBar(
                       title: Text(playlist.title),
-                      background: CachedNetworkImage(
-                        imageUrl: playlist.coverUrl,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, error, stackTrace) => Container(
-                          color: Colors.grey,
-                          child: const Center(
-                            child: Icon(
-                              Icons.music_note,
-                              size: 80,
-                              color: Colors.white,
-                            ),
-                          ),
+                      background: Hero(
+                        tag: playlist.id,
+                        flightShuttleBuilder:
+                            FlightShuttleBuilders.fadeTransition,
+                        child: CachedNetworkImage(
+                          imageUrl: playlist.coverUrl,
+                          fit: BoxFit.cover,
+                          errorWidget: (context, error, stackTrace) =>
+                              Container(
+                                color: Colors.grey,
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.music_note,
+                                    size: 80,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
                         ),
                       ),
                     ),
