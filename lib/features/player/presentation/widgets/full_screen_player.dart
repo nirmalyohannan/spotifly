@@ -4,7 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
-import 'package:spotifly/shared/domain/entities/song.dart';
+import 'package:spotifly/features/player/presentation/widgets/player_album_art.dart';
+import 'package:spotifly/features/player/presentation/widgets/player_appbar.dart';
+import 'package:spotifly/features/player/presentation/widgets/player_progress_bar.dart';
+import 'package:spotifly/features/player/presentation/widgets/player_progress_time_row.dart';
+import 'package:spotifly/features/player/presentation/widgets/player_title_and_artist.dart';
 
 class FullScreenPlayer extends StatelessWidget {
   final Color? backgroundColor;
@@ -17,43 +21,7 @@ class FullScreenPlayer extends StatelessWidget {
           previous.message != current.message && current.message != null,
       listener: (context, state) {
         if (state.message != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  if (state.currentSong != null)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: CachedNetworkImage(
-                          imageUrl: state.currentSong!.coverUrl,
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  Expanded(
-                    child: Text(
-                      state.message!,
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              action: SnackBarAction(
-                label: 'Change',
-                textColor: Colors.green,
-                onPressed: () {},
-              ),
-              backgroundColor: const Color(0xFF282828),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          );
+          _showSnackBar(context, state);
         }
       },
       child: BlocBuilder<PlayerBloc, PlayerState>(
@@ -61,11 +29,6 @@ class FullScreenPlayer extends StatelessWidget {
           final song = state.currentSong;
 
           if (song == null) return const SizedBox.shrink();
-
-          final progress = (state.duration > Duration.zero)
-              ? (state.position.inMilliseconds / state.duration.inMilliseconds)
-                    .clamp(0.0, 1.0)
-              : 0.0;
 
           return Scaffold(
             backgroundColor:
@@ -79,145 +42,19 @@ class FullScreenPlayer extends StatelessWidget {
                   children: [
                     const Spacer(),
                     // Album Art
-                    Container(
-                      height: 350,
-                      width: 350,
-                      decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(128),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.zero,
-                        child: CachedNetworkImage(
-                          imageUrl: song.coverUrl,
-                          width: 350,
-                          height: 350,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            width: 350,
-                            height: 350,
-                            color: Colors.black26,
-                            child: const Center(
-                              child: Icon(
-                                Icons.album,
-                                color: Colors.white70,
-                                size: 28,
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            width: 350,
-                            height: 350,
-                            color: Colors.black26,
-                            child: const Center(
-                              child: Icon(
-                                Icons.broken_image,
-                                color: Colors.white70,
-                                size: 28,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    PlayerAlbumArt(song: song),
                     const Spacer(),
 
                     // Title and Artist
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                song.title,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                song.artist,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            state.isLiked
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            size: 30,
-                          ),
-                          onPressed: () {
-                            context.read<PlayerBloc>().add(ToggleLikeStatus());
-                          },
-                          color: state.isLiked ? Colors.green : Colors.white,
-                        ),
-                      ],
-                    ),
+                    PlayerTitleAndArtist(song: song, isLiked: state.isLiked),
 
                     const SizedBox(height: 24),
 
                     // Progress Bar
-                    SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        activeTrackColor: Colors.white,
-                        inactiveTrackColor: Colors.white.withValues(alpha: 0.3),
-                        thumbColor: Colors.white,
-                        trackHeight: 4,
-                        thumbShape: const RoundSliderThumbShape(
-                          enabledThumbRadius: 6,
-                        ),
-                        overlayShape: const RoundSliderOverlayShape(
-                          overlayRadius: 14,
-                        ),
-                      ),
-                      child: Slider(
-                        value: progress,
-                        onChanged: (value) {
-                          final position = Duration(
-                            milliseconds:
-                                (state.duration.inMilliseconds * value).round(),
-                          );
-                          context.read<PlayerBloc>().add(SeekEvent(position));
-                        },
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            state.position.toString().substring(2, 7),
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            (state.duration - state.position)
-                                .toString()
-                                .substring(2, 7),
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
+                    const PlayerProgressBar(),
+                    PlayerProgressInTimeRow(
+                      position: state.position,
+                      duration: state.duration,
                     ),
 
                     // Controls
@@ -290,36 +127,43 @@ class FullScreenPlayer extends StatelessWidget {
       ),
     );
   }
-}
 
-class PlayerAppbar extends StatelessWidget implements PreferredSizeWidget {
-  const PlayerAppbar({super.key, required this.song});
-
-  final Song? song;
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: Container(),
+  void _showSnackBar(BuildContext context, PlayerState state) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 2),
+        content: Row(
+          children: [
+            if (state.currentSong != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: CachedNetworkImage(
+                    imageUrl: state.currentSong!.coverUrl,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            Expanded(
+              child: Text(
+                state.message!,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        action: SnackBarAction(
+          label: 'Change',
+          textColor: Colors.green,
+          onPressed: () {},
+        ),
+        backgroundColor: const Color(0xFF282828),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
-      leading: IconButton(
-        icon: const Icon(Icons.keyboard_arrow_down),
-        onPressed: () => Navigator.of(context).pop(),
-      ),
-      centerTitle: true,
-      title: Text(
-        song?.album ?? '',
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-      ),
-      actions: [
-        IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-      ],
     );
   }
 }

@@ -1,10 +1,11 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
 import 'package:spotifly/features/player/presentation/widgets/full_screen_player.dart';
+import 'package:spotifly/features/player/presentation/widgets/mini_player_cover_art.dart';
+import 'package:spotifly/features/player/presentation/widgets/mini_player_title_and_artist.dart';
 
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
@@ -46,70 +47,9 @@ class MiniPlayer extends StatelessWidget {
                 Expanded(
                   child: Row(
                     children: [
-                      ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(4),
-                          bottomLeft: Radius.circular(4),
-                        ),
-                        child: CachedNetworkImage(
-                          imageUrl: song.coverUrl,
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            width: 60,
-                            height: 60,
-                            color: const Color(0xFF282828),
-                            child: const Center(
-                              child: Icon(
-                                Icons.music_note,
-                                color: Colors.white70,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            width: 60,
-                            height: 60,
-                            color: const Color(0xFF282828),
-                            child: const Center(
-                              child: Icon(
-                                Icons.error,
-                                color: Colors.white70,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                      MiniPlayerCoverArt(song: song),
                       const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              song.title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              song.artist,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.7),
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
+                      Expanded(child: MiniPlayerTitleAndArtist(song: song)),
                       IconButton(
                         icon: const Icon(
                           Icons.speaker_group_outlined,
