@@ -8,5 +8,3 @@ abstract class PlaylistEvent extends Equatable {
 }
 
 class LoadPlaylists extends PlaylistEvent {}
-
-class LoadLikedSongs extends PlaylistEvent {}

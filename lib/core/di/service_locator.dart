@@ -18,6 +18,9 @@ import 'package:spotifly/features/settings/domain/repositories/settings_reposito
 import 'package:spotifly/features/settings/domain/usecases/get_user_profile.dart';
 import 'package:spotifly/features/settings/domain/usecases/logout_user.dart';
 import 'package:spotifly/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:spotifly/features/library/domain/use_cases/get_liked_songs.dart';
+import 'package:spotifly/features/library/domain/use_cases/get_liked_songs_count.dart';
+import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -51,6 +54,18 @@ void setupServiceLocator() {
   // Library Feature
   getIt.registerLazySingleton<PlaylistRepository>(
     () => PlaylistRepositoryImpl(),
+  );
+  getIt.registerLazySingleton<GetLikedSongs>(
+    () => GetLikedSongs(getIt<PlaylistRepository>()),
+  );
+  getIt.registerLazySingleton<GetLikedSongsCount>(
+    () => GetLikedSongsCount(getIt<PlaylistRepository>()),
+  );
+  getIt.registerFactory<LikedSongsBloc>(
+    () => LikedSongsBloc(
+      getLikedSongs: getIt<GetLikedSongs>(),
+      getLikedSongsCount: getIt<GetLikedSongsCount>(),
+    ),
   );
 
   // Home Feature

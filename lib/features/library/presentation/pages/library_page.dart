@@ -115,10 +115,14 @@ class _LibraryPageState extends State<LibraryPage>
                               ? LibraryListView(
                                   key: const ValueKey('List'),
                                   playlists: playlistState.playlists,
+                                  likedSongsCount:
+                                      playlistState.likedSongsCount,
                                 )
                               : LibraryGridView(
                                   key: const ValueKey('Grid'),
                                   playlists: playlistState.playlists,
+                                  likedSongsCount:
+                                      playlistState.likedSongsCount,
                                 ),
                         );
                       },

@@ -14,20 +14,20 @@ class PlaylistLoading extends PlaylistState {}
 class PlaylistLoaded extends PlaylistState {
   final List<Playlist> playlists;
   final String? userProfileImage;
+  final int likedSongsCount;
 
-  const PlaylistLoaded(this.playlists, {this.userProfileImage});
-
-  @override
-  List<Object> get props => [playlists, userProfileImage ?? ''];
-}
-
-class LikedSongsLoaded extends PlaylistState {
-  final List<Song> songs;
-
-  const LikedSongsLoaded(this.songs);
+  const PlaylistLoaded(
+    this.playlists, {
+    this.userProfileImage,
+    this.likedSongsCount = 0,
+  });
 
   @override
-  List<Object> get props => [songs];
+  List<Object> get props => [
+    playlists,
+    userProfileImage ?? '',
+    likedSongsCount,
+  ];
 }
 
 class PlaylistError extends PlaylistState {

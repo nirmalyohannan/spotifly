@@ -21,9 +21,11 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   }
 
   @override
-  Future<List<Song>> getLikedSongs() async {
+  Future<List<Song>> getLikedSongs({int offset = 0, int limit = 20}) async {
     try {
-      final data = await _apiClient.getJson('/me/tracks?limit=50');
+      final data = await _apiClient.getJson(
+        '/me/tracks?offset=$offset&limit=$limit',
+      );
       final items = data['items'] as List;
       return items.map((item) {
         final track = SpotifyTrack.fromJson(item['track']);
@@ -32,6 +34,17 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     } catch (e) {
       log('Error fetching liked songs: $e');
       return [];
+    }
+  }
+
+  @override
+  Future<int> getLikedSongsCount() async {
+    try {
+      final data = await _apiClient.getJson('/me/tracks?limit=1');
+      return data['total'] as int;
+    } catch (e) {
+      log('Error fetching liked songs count: $e');
+      return 0;
     }
   }
 

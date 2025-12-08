@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:spotifly/core/services/spotify_auth_service.dart';
 
@@ -10,6 +11,7 @@ class SpotifyApiClient {
   SpotifyApiClient(this._authService);
 
   Future<http.Response> get(String endpoint) async {
+    logRequest(endpoint: endpoint, method: 'GET');
     final token = await _authService.getAccessToken();
     if (token == null) {
       throw Exception('Not authenticated');
@@ -35,6 +37,7 @@ class SpotifyApiClient {
   }
 
   Future<dynamic> getJson(String endpoint) async {
+    logRequest(endpoint: endpoint, method: 'GET');
     final response = await get(endpoint);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonDecode(response.body);
@@ -46,6 +49,7 @@ class SpotifyApiClient {
   }
 
   Future<http.Response> put(String endpoint, {dynamic body}) async {
+    logRequest(endpoint: endpoint, method: 'PUT', body: body);
     final token = await _authService.getAccessToken();
     if (token == null) {
       throw Exception('Not authenticated');
@@ -77,6 +81,7 @@ class SpotifyApiClient {
   }
 
   Future<http.Response> delete(String endpoint, {dynamic body}) async {
+    logRequest(endpoint: endpoint, method: 'DELETE', body: body);
     final token = await _authService.getAccessToken();
     if (token == null) {
       throw Exception('Not authenticated');
@@ -113,5 +118,21 @@ class SpotifyApiClient {
       }
     }
     return response;
+  }
+
+  void logRequest({
+    required String endpoint,
+    required String method,
+    dynamic body,
+  }) {
+    var time = DateTime.now();
+    var formattedTime =
+        '${time.hour}:${time.minute}:${time.second}.${time.millisecond}';
+    log("\n-\n--");
+    log('$formattedTime | $method | $endpoint');
+    if (body != null) {
+      log('Body: ${body.toString()}');
+    }
+    log("\n--\n-");
   }
 }

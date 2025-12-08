@@ -3,17 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/core/theme/app_colors.dart';
 import 'package:spotifly/core/utils/flight_shuttle_builder.dart';
-import 'package:spotifly/features/library/presentation/bloc/playlist_bloc.dart';
+
 import 'package:spotifly/features/library/presentation/pages/liked_songs_page.dart';
 import 'package:spotifly/features/library/presentation/pages/playlist_detail_page.dart';
 import 'package:spotifly/features/library/presentation/widgets/library_list_item.dart';
-import 'package:spotifly/shared/data/repositories/playlist_repository_impl.dart';
 import 'package:spotifly/shared/domain/entities/playlist.dart';
+import 'package:spotifly/core/di/service_locator.dart';
+import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_bloc.dart';
+import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_event.dart';
 
 class LibraryListView extends StatelessWidget {
   final List<Playlist> playlists;
+  final int likedSongsCount;
 
-  const LibraryListView({super.key, required this.playlists});
+  const LibraryListView({
+    super.key,
+    required this.playlists,
+    this.likedSongsCount = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +29,8 @@ class LibraryListView extends StatelessWidget {
       children: [
         LibraryListItem(
           title: 'Liked Songs',
-          subtitle: 'Playlist • 58 songs',
-          leading: _LikedSongCover(),
+          subtitle: 'Playlist • $likedSongsCount songs',
+          leading: const _LikedSongCover(),
           onTap: () => onLikedSongsTap(context),
         ),
         LibraryListItem(
@@ -69,17 +76,9 @@ class LibraryListView extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: context.read<PlaylistBloc>(),
-          child: FutureBuilder(
-            future: PlaylistRepositoryImpl().getLikedSongs(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return LikedSongsPage(songs: snapshot.data!);
-              }
-              return const Center(child: CircularProgressIndicator());
-            },
-          ),
+        builder: (_) => BlocProvider(
+          create: (_) => getIt<LikedSongsBloc>()..add(LoadLikedSongs()),
+          child: const LikedSongsPage(),
         ),
       ),
     );
