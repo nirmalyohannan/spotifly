@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:spotifly/shared/domain/entities/song.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_bloc.dart';
 import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_event.dart';
@@ -80,34 +81,12 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                           );
                         }
                         final song = state.songs[index];
-                        if (song == null) {
-                          return _ShimmerListItem(index: index);
-                        }
-                        return ListTile(
-                          leading: CachedNetworkImage(
-                            imageUrl: song.coverUrl,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            errorWidget: (context, error, stackTrace) =>
-                                Container(
-                                  width: 50,
-                                  height: 50,
-                                  color: Colors.grey,
-                                  child: const Icon(Icons.music_note),
-                                ),
-                          ),
-                          title: Text(
-                            song.title,
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          subtitle: Text(
-                            song.artist,
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                          onTap: () {
-                            context.read<PlayerBloc>().add(SetSongEvent(song));
-                          },
+
+                        return AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 600),
+                          child: song == null
+                              ? _ShimmerListItem(index: index)
+                              : LikedSongsListItem(song: song),
                         );
                       },
                       childCount: state.hasReachedMax
@@ -136,6 +115,35 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
           const Positioned(left: 0, right: 0, bottom: 0, child: MiniPlayer()),
         ],
       ),
+    );
+  }
+}
+
+class LikedSongsListItem extends StatelessWidget {
+  const LikedSongsListItem({super.key, required this.song});
+
+  final Song song;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: CachedNetworkImage(
+        imageUrl: song.coverUrl,
+        width: 50,
+        height: 50,
+        fit: BoxFit.cover,
+        errorWidget: (context, error, stackTrace) => Container(
+          width: 50,
+          height: 50,
+          color: Colors.grey,
+          child: const Icon(Icons.music_note),
+        ),
+      ),
+      title: Text(song.title, style: const TextStyle(color: Colors.white)),
+      subtitle: Text(song.artist, style: const TextStyle(color: Colors.grey)),
+      onTap: () {
+        context.read<PlayerBloc>().add(SetSongEvent(song));
+      },
     );
   }
 }
