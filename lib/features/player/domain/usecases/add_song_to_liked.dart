@@ -1,3 +1,4 @@
+import 'package:spotifly/shared/domain/entities/song.dart';
 import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
 
 class AddSongToLiked {
@@ -5,7 +6,7 @@ class AddSongToLiked {
 
   AddSongToLiked(this.repository);
 
-  Future<void> call(String songId) async {
-    return repository.addSongToLiked(songId);
+  Future<void> call(Song song) async {
+    return repository.addSongToLiked(song);
   }
 }

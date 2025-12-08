@@ -60,8 +60,12 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
             state.copyWith(isLiked: false, message: "Removed from Liked Songs"),
           );
         } else {
-          await _addSongToLiked(song.id);
-          emit(state.copyWith(isLiked: true, message: "Added to Liked Songs"));
+          if (state.currentSong != null) {
+            await _addSongToLiked(state.currentSong!);
+            emit(
+              state.copyWith(isLiked: true, message: "Added to Liked Songs"),
+            );
+          }
         }
       } catch (e) {
         log("Error toggling like status: $e");

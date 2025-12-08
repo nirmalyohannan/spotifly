@@ -6,7 +6,19 @@ class GetLikedSongs {
 
   GetLikedSongs(this.repository);
 
-  Future<List<Song>> call({int offset = 0, int limit = 20}) async {
-    return await repository.getLikedSongs(offset: offset, limit: limit);
+  Future<List<Song>> call({
+    int offset = 0,
+    int limit = 20,
+    bool forceRefresh = false,
+  }) async {
+    return repository.getLikedSongs(
+      offset: offset,
+      limit: limit,
+      forceRefresh: forceRefresh,
+    );
+  }
+
+  List<Song> getCached({int offset = 0, int limit = 20}) {
+    return repository.getCachedLikedSongs(offset: offset, limit: limit);
   }
 }

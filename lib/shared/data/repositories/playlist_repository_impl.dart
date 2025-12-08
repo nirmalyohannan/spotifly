@@ -14,34 +14,125 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   String? _cachedUserProfileImage;
   List<Playlist>? _cachedPlaylists;
 
+  // Liked Songs Cache
+  final List<Song> _cachedLikedSongs = [];
+  int? _cachedTotalLikedSongsCount;
+  DateTime? _likedSongsCacheTime;
+  static const Duration _cacheDuration = Duration(minutes: 2);
+
   @override
   void clearCache() {
     _cachedUserProfileImage = null;
     _cachedPlaylists = null;
+    _cachedLikedSongs.clear();
+    _cachedTotalLikedSongsCount = null;
+    _likedSongsCacheTime = null;
   }
 
   @override
-  Future<List<Song>> getLikedSongs({int offset = 0, int limit = 20}) async {
+  List<Song> getCachedLikedSongs({int offset = 0, int limit = 20}) {
+    if (offset >= _cachedLikedSongs.length) {
+      return [];
+    }
+    final end = (offset + limit < _cachedLikedSongs.length)
+        ? offset + limit
+        : _cachedLikedSongs.length;
+    return _cachedLikedSongs.sublist(offset, end);
+  }
+
+  @override
+  Future<List<Song>> getLikedSongs({
+    int offset = 0,
+    int limit = 20,
+    bool forceRefresh = false,
+  }) async {
+    final now = DateTime.now();
+    final isCacheValid =
+        _likedSongsCacheTime != null &&
+        now.difference(_likedSongsCacheTime!) < _cacheDuration;
+
+    if (!forceRefresh && isCacheValid) {
+      if (offset + limit <= _cachedLikedSongs.length) {
+        return _cachedLikedSongs.sublist(offset, offset + limit);
+      } else if (_cachedTotalLikedSongsCount != null &&
+          _cachedLikedSongs.length == _cachedTotalLikedSongsCount &&
+          offset < _cachedLikedSongs.length) {
+        // We have all songs cached, and the requested offset is within bounds.
+        // Return the remaining songs (last page scenario).
+        return _cachedLikedSongs.sublist(offset);
+      }
+    }
+
+    // If requesting initial page and cache is expired, clear cache
+    if (offset == 0 && !isCacheValid) {
+      _cachedLikedSongs.clear();
+    }
+
     try {
       final data = await _apiClient.getJson(
         '/me/tracks?offset=$offset&limit=$limit',
       );
+
+      if (data['total'] != null) {
+        _cachedTotalLikedSongsCount = data['total'] as int;
+      }
+
       final items = data['items'] as List;
-      return items.map((item) {
+      final newSongs = items.map((item) {
         final track = SpotifyTrack.fromJson(item['track']);
         return _mapSpotifyTrackToSong(track);
       }).toList();
+
+      // Update Cache
+      if (offset == 0) {
+        // Initial load or refresh
+        _cachedLikedSongs.clear();
+        _cachedLikedSongs.addAll(newSongs);
+        _likedSongsCacheTime = DateTime.now();
+      } else {
+        // Appending / Pagination
+        // We only append if the offset matches the end of our cache to avoid gaps
+        if (offset == _cachedLikedSongs.length) {
+          _cachedLikedSongs.addAll(newSongs);
+          // Extend validity? Maybe not, keep original validity time.
+          // Or update time?
+          // If we are paging, we assume the list is consistent.
+          _likedSongsCacheTime = DateTime.now();
+        } else if (offset < _cachedLikedSongs.length) {
+          // Overlap? Maybe replace?
+          // For simplicity, do nothing or just return newSongs.
+          // If we have random access, maintaining a consistent list is hard without full sync.
+          // But since the usage is usually infinite scroll, we mostly hit the first case.
+        }
+      }
+
+      return newSongs;
     } catch (e) {
       log('Error fetching liked songs: $e');
+      // If we have partial cache, maybe return it?
+      // User requirements didn't specify offline support, just reducing API calls.
       return [];
     }
   }
 
   @override
   Future<int> getLikedSongsCount() async {
+    final now = DateTime.now();
+    final isCacheValid =
+        _likedSongsCacheTime != null &&
+        now.difference(_likedSongsCacheTime!) < _cacheDuration;
+
+    if (isCacheValid && _cachedTotalLikedSongsCount != null) {
+      return _cachedTotalLikedSongsCount!;
+    }
+
     try {
       final data = await _apiClient.getJson('/me/tracks?limit=1');
-      return data['total'] as int;
+      final total = data['total'] as int;
+      _cachedTotalLikedSongsCount = total;
+      // We don't necessarily update _likedSongsCacheTime here as we didn't fetch the list
+      // But it might be fine to leave it separate or partial.
+      return total;
     } catch (e) {
       log('Error fetching liked songs count: $e');
       return 0;
@@ -128,16 +219,30 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   }
 
   @override
-  Future<void> addSongToLiked(String songId) async {
+  Future<void> addSongToLiked(Song song) async {
     try {
       var response = await _apiClient.put(
         '/me/tracks',
         body: {
-          "ids": [songId],
+          "ids": [song.id],
         },
       );
       if (response.statusCode != 200) {
         throw Exception('Failed to add song to liked');
+      }
+
+      // Update Cache
+      if (_cachedLikedSongs.isNotEmpty || _likedSongsCacheTime != null) {
+        // Prevent duplicates
+        if (!_cachedLikedSongs.any((s) => s.id == song.id)) {
+          _cachedLikedSongs.insert(0, song);
+          // Ensure cache time is set if it was null (though list check handles it)
+          _likedSongsCacheTime ??= DateTime.now();
+
+          if (_cachedTotalLikedSongsCount != null) {
+            _cachedTotalLikedSongsCount = _cachedTotalLikedSongsCount! + 1;
+          }
+        }
       }
     } catch (e) {
       log('Error adding song to liked: $e');
@@ -157,6 +262,13 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       if (response.statusCode != 200) {
         throw Exception('Failed to remove song from liked');
       }
+
+      // Update Cache
+      _cachedLikedSongs.removeWhere((song) => song.id == songId);
+      if (_cachedTotalLikedSongsCount != null &&
+          _cachedTotalLikedSongsCount! > 0) {
+        _cachedTotalLikedSongsCount = _cachedTotalLikedSongsCount! - 1;
+      }
     } catch (e) {
       log('Error removing song from liked: $e');
       rethrow;
@@ -165,6 +277,22 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   @override
   Future<bool> isSongLiked(String songId) async {
+    final now = DateTime.now();
+    final isCacheValid =
+        _likedSongsCacheTime != null &&
+        now.difference(_likedSongsCacheTime!) < _cacheDuration;
+
+    if (isCacheValid) {
+      if (_cachedLikedSongs.any((s) => s.id == songId)) {
+        return true;
+      }
+      // If we have the full list cached (and it's valid), and the song isn't in it, it's not liked.
+      if (_cachedTotalLikedSongsCount != null &&
+          _cachedLikedSongs.length >= _cachedTotalLikedSongsCount!) {
+        return false;
+      }
+    }
+
     try {
       final response = await _apiClient.getJson(
         '/me/tracks/contains?ids=$songId',
