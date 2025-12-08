@@ -66,7 +66,6 @@ class LikedSongsPage extends StatelessWidget {
                       song.artist,
                       style: const TextStyle(color: Colors.grey),
                     ),
-                    trailing: const Icon(Icons.favorite, color: Colors.green),
                     onTap: () {
                       context.read<PlayerBloc>().add(SetSongEvent(song));
                     },
