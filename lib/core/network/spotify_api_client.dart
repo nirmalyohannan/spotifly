@@ -128,11 +128,10 @@ class SpotifyApiClient {
     var time = DateTime.now();
     var formattedTime =
         '${time.hour}:${time.minute}:${time.second}.${time.millisecond}';
-    log("\n-\n--");
+    // log("\n-\n--");
     log('$formattedTime | $method | $endpoint');
-    if (body != null) {
-      log('Body: ${body.toString()}');
-    }
-    log("\n--\n-");
+    // if (body != null) {
+    //   log('Body: ${body.toString()}');
+    // }
   }
 }

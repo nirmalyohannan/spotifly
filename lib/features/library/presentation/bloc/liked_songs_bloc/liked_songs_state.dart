@@ -10,7 +10,6 @@ class LikedSongsState extends Equatable {
   final bool hasReachedMax;
   final int totalCount;
   final String errorMessage;
-  final bool isLoadingBackground;
 
   const LikedSongsState({
     this.status = LikedSongsStatus.initial,
@@ -18,7 +17,6 @@ class LikedSongsState extends Equatable {
     this.hasReachedMax = false,
     this.totalCount = 0,
     this.errorMessage = '',
-    this.isLoadingBackground = false,
   });
 
   LikedSongsState copyWith({
@@ -27,7 +25,6 @@ class LikedSongsState extends Equatable {
     bool? hasReachedMax,
     int? totalCount,
     String? errorMessage,
-    bool? isLoadingBackground,
   }) {
     return LikedSongsState(
       status: status ?? this.status,
@@ -35,7 +32,6 @@ class LikedSongsState extends Equatable {
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       totalCount: totalCount ?? this.totalCount,
       errorMessage: errorMessage ?? this.errorMessage,
-      isLoadingBackground: isLoadingBackground ?? this.isLoadingBackground,
     );
   }
 
@@ -46,6 +42,5 @@ class LikedSongsState extends Equatable {
     hasReachedMax,
     totalCount,
     errorMessage,
-    isLoadingBackground,
   ];
 }

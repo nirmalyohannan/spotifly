@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:spotifly/core/di/service_locator.dart';
@@ -18,7 +19,14 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   final List<Song> _cachedLikedSongs = [];
   int? _cachedTotalLikedSongsCount;
   DateTime? _likedSongsCacheTime;
+  bool _needsRefresh = false;
+  bool _isLikedSongsRefreshing = false;
+
   static const Duration _cacheDuration = Duration(minutes: 2);
+  final _likedSongsController = StreamController<List<Song>>.broadcast();
+
+  @override
+  Stream<List<Song>> get likedSongsStream => _likedSongsController.stream;
 
   @override
   void clearCache() {
@@ -27,6 +35,8 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     _cachedLikedSongs.clear();
     _cachedTotalLikedSongsCount = null;
     _likedSongsCacheTime = null;
+    _needsRefresh = false;
+    _isLikedSongsRefreshing = false;
   }
 
   @override
@@ -111,25 +121,124 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   @override
   Future<int> getLikedSongsCount() async {
-    final now = DateTime.now();
-    final isCacheValid =
-        _likedSongsCacheTime != null &&
-        now.difference(_likedSongsCacheTime!) < _cacheDuration;
-
-    if (isCacheValid && _cachedTotalLikedSongsCount != null) {
-      return _cachedTotalLikedSongsCount!;
-    }
-
     try {
-      final data = await _apiClient.getJson('/me/tracks?offset=0&limit=20');
+      // Fetch the first 50 songs to check consistency and count
+      final data = await _apiClient.getJson('/me/tracks?offset=0&limit=50');
       final total = data['total'] as int;
+      final items = data['items'] as List;
+      final newSongs = items.map((item) {
+        final track = SpotifyTrack.fromJson(item['track']);
+        return _mapSpotifyTrackToSong(track);
+      }).toList();
+
+      // 1. Check if total count matches
+      if (_cachedTotalLikedSongsCount != total) {
+        _needsRefresh = true;
+      }
+
+      // 2. Check if first 50 songs match (only if count matched, otherwise we already know we need refresh)
+      if (!_needsRefresh && _cachedLikedSongs.isNotEmpty) {
+        int checkLimit = newSongs.length < _cachedLikedSongs.length
+            ? newSongs.length
+            : _cachedLikedSongs.length;
+        if (checkLimit > 50) checkLimit = 50; // Just in case
+
+        for (int i = 0; i < checkLimit; i++) {
+          if (newSongs[i].id != _cachedLikedSongs[i].id) {
+            _needsRefresh = true;
+            break;
+          }
+        }
+      }
+
+      // Update local cache count
       _cachedTotalLikedSongsCount = total;
-      // TODO: Replace first 20 songs with new songs without removing other from cache
+
+      // Update the first 50 songs in cache immediately
+      for (int i = 0; i < newSongs.length; i++) {
+        if (i < _cachedLikedSongs.length) {
+          _cachedLikedSongs[i] = newSongs[i];
+        } else {
+          _cachedLikedSongs.add(newSongs[i]);
+        }
+      }
+
+      // If we have more items in cache than total, truncate immediately (rare case if deletions didn't sync)
+      if (_cachedLikedSongs.length > total) {
+        _cachedLikedSongs.removeRange(total, _cachedLikedSongs.length);
+      }
+
+      // Emit updated list
+      _likedSongsController.add(List.from(_cachedLikedSongs));
+
+      // Trigger background refresh if needed
+      if (_needsRefresh && !_isLikedSongsRefreshing) {
+        _likedSongsBackgroundRefresh(total);
+      }
 
       return total;
     } catch (e) {
       log('Error fetching liked songs count: $e');
-      return 0;
+      return _cachedTotalLikedSongsCount ?? 0;
+    }
+  }
+
+  void _likedSongsBackgroundRefresh(int total) async {
+    _isLikedSongsRefreshing = true;
+    int offset = 50;
+    // If we have fewer than 50 songs, we are done after the initial fetch.
+
+    while (offset < total) {
+      // 2 seconds gap
+      await Future.delayed(const Duration(seconds: 2));
+
+      try {
+        final data = await _apiClient.getJson(
+          '/me/tracks?offset=$offset&limit=50',
+        );
+        final items = data['items'] as List;
+        final pageSongs = items.map((item) {
+          final track = SpotifyTrack.fromJson(item['track']);
+          return _mapSpotifyTrackToSong(track);
+        }).toList();
+
+        // Update cache ensuring index alignment
+        for (int i = 0; i < pageSongs.length; i++) {
+          int targetIndex = offset + i;
+          if (targetIndex < _cachedLikedSongs.length) {
+            _cachedLikedSongs[targetIndex] = pageSongs[i];
+          } else {
+            _cachedLikedSongs.add(pageSongs[i]);
+          }
+        }
+
+        // Emit update after each page
+        _likedSongsController.add(List.from(_cachedLikedSongs));
+
+        offset += 50;
+
+        // Re-check total from API response?
+        // The API returns total in every page. We could adapt if it changes mid-stream.
+        if (data['total'] != null) {
+          int newTotal = data['total'];
+          if (newTotal != total) {
+            total = newTotal;
+            _cachedTotalLikedSongsCount = total;
+          }
+        }
+      } catch (e) {
+        log('Error refreshing liked songs background at offset $offset: $e');
+        // Break or retry? Break to avoid infinite loops or spamming errors.
+        break;
+      } finally {
+        _isLikedSongsRefreshing = false;
+      }
+    }
+
+    // Final cleanup: if cache exceeded total (e.g. tracks deleted while syncing)
+    if (_cachedLikedSongs.length > total) {
+      _cachedLikedSongs.removeRange(total, _cachedLikedSongs.length);
+      _likedSongsController.add(List.from(_cachedLikedSongs));
     }
   }
 

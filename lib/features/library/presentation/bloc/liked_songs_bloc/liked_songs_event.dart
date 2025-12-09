@@ -9,11 +9,11 @@ abstract class LikedSongsEvent extends Equatable {
 
 class LoadLikedSongs extends LikedSongsEvent {}
 
-class LoadMoreLikedSongs extends LikedSongsEvent {
-  final int index;
+class LikedSongsCountUpdated extends LikedSongsEvent {
+  final int count;
 
-  const LoadMoreLikedSongs(this.index);
+  const LikedSongsCountUpdated(this.count);
 
   @override
-  List<Object> get props => [index];
+  List<Object> get props => [count];
 }

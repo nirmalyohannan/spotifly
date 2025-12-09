@@ -67,46 +67,28 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                   }
 
                   return SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index >= state.songs.length) {
-                          return const SizedBox(
-                            height: 50,
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-                        final song = state.songs[index];
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      // Use shimmers for items not yet in the list but within totalCount
+                      if (index >= state.songs.length) {
+                        return LikedSongsShimmerItem(index: index);
+                      }
 
-                        return AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 600),
-                          child: song == null
-                              ? LikedSongsShimmerItem(index: index)
-                              : LikedSongsListItem(song: song),
-                        );
-                      },
-                      childCount: state.hasReachedMax
-                          ? state.songs.length
-                          : state.songs.length + 1,
-                    ),
+                      final song = state.songs[index];
+
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 600),
+                        child: song == null
+                            ? LikedSongsShimmerItem(index: index)
+                            : LikedSongsListItem(song: song),
+                      );
+                    }, childCount: state.totalCount),
                   );
                 },
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           ),
-          BlocBuilder<LikedSongsBloc, LikedSongsState>(
-            builder: (context, state) {
-              if (state.isLoadingBackground) {
-                return const Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: SafeArea(child: LinearProgressIndicator(minHeight: 2)),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
+
           const Positioned(left: 0, right: 0, bottom: 0, child: MiniPlayer()),
         ],
       ),

@@ -21,4 +21,6 @@ class GetLikedSongs {
   List<Song> getCached() {
     return repository.getCachedLikedSongs();
   }
+
+  Stream<List<Song>> get stream => repository.likedSongsStream;
 }
