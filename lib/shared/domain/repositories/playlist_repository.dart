@@ -7,7 +7,7 @@ abstract class PlaylistRepository {
     int limit = 20,
     bool forceRefresh = false,
   });
-  List<Song> getCachedLikedSongs({int offset = 0, int limit = 20});
+  List<Song> getCachedLikedSongs();
   Future<int> getLikedSongsCount();
   Future<List<Playlist>> getPlaylists();
   Future<Playlist?> getPlaylistById(String id);

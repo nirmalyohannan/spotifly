@@ -30,14 +30,8 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   }
 
   @override
-  List<Song> getCachedLikedSongs({int offset = 0, int limit = 20}) {
-    if (offset >= _cachedLikedSongs.length) {
-      return [];
-    }
-    final end = (offset + limit < _cachedLikedSongs.length)
-        ? offset + limit
-        : _cachedLikedSongs.length;
-    return _cachedLikedSongs.sublist(offset, end);
+  List<Song> getCachedLikedSongs() {
+    return _cachedLikedSongs;
   }
 
   @override
@@ -127,11 +121,11 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     }
 
     try {
-      final data = await _apiClient.getJson('/me/tracks?limit=1');
+      final data = await _apiClient.getJson('/me/tracks?offset=0&limit=20');
       final total = data['total'] as int;
       _cachedTotalLikedSongsCount = total;
-      // We don't necessarily update _likedSongsCacheTime here as we didn't fetch the list
-      // But it might be fine to leave it separate or partial.
+      // TODO: Replace first 20 songs with new songs without removing other from cache
+
       return total;
     } catch (e) {
       log('Error fetching liked songs count: $e');

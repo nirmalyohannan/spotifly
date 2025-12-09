@@ -18,7 +18,7 @@ class GetLikedSongs {
     );
   }
 
-  List<Song> getCached({int offset = 0, int limit = 20}) {
-    return repository.getCachedLikedSongs(offset: offset, limit: limit);
+  List<Song> getCached() {
+    return repository.getCachedLikedSongs();
   }
 }

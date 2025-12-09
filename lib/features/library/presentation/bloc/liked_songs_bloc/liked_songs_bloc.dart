@@ -34,7 +34,7 @@ class LikedSongsBloc extends Bloc<LikedSongsEvent, LikedSongsState> {
       final List<Song?> sparseSongs = List.filled(totalCount, null);
 
       // 2. Load cached data for the first page
-      final cachedSongs = getLikedSongs.getCached(offset: 0, limit: 20);
+      final cachedSongs = getLikedSongs.getCached();
       for (int i = 0; i < cachedSongs.length; i++) {
         sparseSongs[i] = cachedSongs[i];
       }
