@@ -37,11 +37,6 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   }
 
   @override
-  List<Song> getCachedLikedSongs() {
-    return _cachedLikedSongs;
-  }
-
-  @override
   Future<int> getLikedSongsCount() async {
     try {
       // Fetch the first 50 songs to check consistency and count
