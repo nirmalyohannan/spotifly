@@ -2,11 +2,6 @@ import '../../domain/entities/playlist.dart';
 import '../../domain/entities/song.dart';
 
 abstract class PlaylistRepository {
-  Future<List<Song>> getLikedSongs({
-    int offset = 0,
-    int limit = 20,
-    bool forceRefresh = false,
-  });
   List<Song> getCachedLikedSongs();
   Future<int> getLikedSongsCount();
   Future<List<Playlist>> getPlaylists();
