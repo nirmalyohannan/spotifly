@@ -106,6 +106,7 @@ class LikedSongsBloc extends Bloc<LikedSongsEvent, LikedSongsState> {
     final int pageOffset = (event.index ~/ limit) * limit;
 
     // 1. Check if we are already fetching this offset
+    // This avoids multiple requests for the same page (API Duplications)
     if (_fetchingOffsets.contains(pageOffset)) return;
 
     // 2. Check if we actually need to fetch (is it already loaded?)

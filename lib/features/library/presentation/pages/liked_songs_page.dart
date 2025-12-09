@@ -1,14 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:spotifly/shared/domain/entities/song.dart';
-import 'package:visibility_detector/visibility_detector.dart';
+import 'package:spotifly/features/library/presentation/widgets/liked_songs_list_item.dart';
+import 'package:spotifly/features/library/presentation/widgets/liked_songs_shimmer_item.dart';
 import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_bloc.dart';
-import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_event.dart';
 import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_state.dart';
-import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
-import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 import 'package:spotifly/features/player/presentation/widgets/mini_player.dart';
 
 class LikedSongsPage extends StatefulWidget {
@@ -51,12 +46,12 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
               ),
               BlocBuilder<LikedSongsBloc, LikedSongsState>(
                 builder: (context, state) {
-                  if (state.status == LikedSongsStatus.initial ||
-                      (state.status == LikedSongsStatus.loading &&
-                          state.songs.isEmpty)) {
+                  if ((state.status == LikedSongsStatus.initial ||
+                          state.status == LikedSongsStatus.loading) &&
+                      state.songs.isEmpty) {
                     return SliverList(
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) => _ShimmerListItem(index: index),
+                        (context, index) => LikedSongsShimmerItem(index: index),
                         childCount: 15,
                       ),
                     );
@@ -85,7 +80,7 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                         return AnimatedSwitcher(
                           duration: const Duration(milliseconds: 600),
                           child: song == null
-                              ? _ShimmerListItem(index: index)
+                              ? LikedSongsShimmerItem(index: index)
                               : LikedSongsListItem(song: song),
                         );
                       },
@@ -119,35 +114,6 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
   }
 }
 
-class LikedSongsListItem extends StatelessWidget {
-  const LikedSongsListItem({super.key, required this.song});
-
-  final Song song;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: CachedNetworkImage(
-        imageUrl: song.coverUrl,
-        width: 50,
-        height: 50,
-        fit: BoxFit.cover,
-        errorWidget: (context, error, stackTrace) => Container(
-          width: 50,
-          height: 50,
-          color: Colors.grey,
-          child: const Icon(Icons.music_note),
-        ),
-      ),
-      title: Text(song.title, style: const TextStyle(color: Colors.white)),
-      subtitle: Text(song.artist, style: const TextStyle(color: Colors.grey)),
-      onTap: () {
-        context.read<PlayerBloc>().add(SetSongEvent(song));
-      },
-    );
-  }
-}
-
 class _LikedSongsHeaderBackground extends StatelessWidget {
   const _LikedSongsHeaderBackground();
 
@@ -163,36 +129,6 @@ class _LikedSongsHeaderBackground extends StatelessWidget {
       ),
       child: const Center(
         child: Icon(Icons.favorite, size: 80, color: Colors.white),
-      ),
-    );
-  }
-}
-
-// ... other imports ...
-
-// ...
-
-class _ShimmerListItem extends StatelessWidget {
-  final int index;
-  const _ShimmerListItem({required this.index});
-
-  @override
-  Widget build(BuildContext context) {
-    return VisibilityDetector(
-      key: Key('shimmer-liked-song-$index'),
-      onVisibilityChanged: (info) {
-        if (info.visibleFraction > 0.1) {
-          context.read<LikedSongsBloc>().add(LoadMoreLikedSongs(index));
-        }
-      },
-      child: Shimmer.fromColors(
-        baseColor: Colors.grey[800]!,
-        highlightColor: Colors.grey[600]!,
-        child: ListTile(
-          leading: Container(width: 50, height: 50, color: Colors.white),
-          title: Container(width: 100, height: 16, color: Colors.white),
-          subtitle: Container(width: 60, height: 14, color: Colors.white),
-        ),
       ),
     );
   }
