@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:spotifly/core/network/spotify_api_client.dart';
 import 'package:spotifly/shared/data/data_sources/playlist_local_data_source.dart';
-import 'package:spotifly/shared/data/models/spotify_models.dart';
+import 'package:spotifly/shared/data/data_sources/playlist_remote_data_source.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/repositories/playlist_repository.dart';
+import '../mappers/spotify_mapper.dart';
 
 class PlaylistRepositoryImpl implements PlaylistRepository {
-  final SpotifyApiClient _apiClient;
+  final PlaylistRemoteDataSource _remoteDataSource;
   final PlaylistLocalDataSource _localDataSource;
 
-  PlaylistRepositoryImpl(this._apiClient, this._localDataSource);
+  PlaylistRepositoryImpl(this._remoteDataSource, this._localDataSource);
 
   // Cache - User Profile & Playlists can remain in memory or move to Hive later if requested.
   // For now task only mentioned LikedSongs variables.
@@ -58,13 +58,13 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       }
 
       // 2. Fetch the first 50 songs from API
-      final data = await _apiClient.getJson('/me/tracks?offset=0&limit=50');
-      final apiTotal = data['total'] as int;
-      final items = data['items'] as List;
-      final newSongs = items.map((item) {
-        final track = SpotifyTrack.fromJson(item['track']);
-        return _mapSpotifyTrackToSong(track);
-      }).toList();
+      // Use Remote Data Source
+      final remoteData = await _remoteDataSource.getLikedSongs(
+        offset: 0,
+        limit: 50,
+      );
+      final apiTotal = remoteData.total;
+      final newSongs = remoteData.items.map(SpotifyMapper.toSong).toList();
 
       bool needsRefresh = false;
       bool localNeedsRefresh = await _localDataSource.getNeedsRefresh();
@@ -145,14 +145,12 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       await Future.delayed(const Duration(seconds: 2));
 
       try {
-        final data = await _apiClient.getJson(
-          '/me/tracks?offset=$offset&limit=50',
+        final remoteData = await _remoteDataSource.getLikedSongs(
+          offset: offset,
+          limit: 50,
         );
-        final items = data['items'] as List;
-        final pageSongs = items.map((item) {
-          final track = SpotifyTrack.fromJson(item['track']);
-          return _mapSpotifyTrackToSong(track);
-        }).toList();
+
+        final pageSongs = remoteData.items.map(SpotifyMapper.toSong).toList();
 
         // Update local list
         for (int i = 0; i < pageSongs.length; i++) {
@@ -169,12 +167,10 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
         offset += 50;
 
-        if (data['total'] != null) {
-          int newTotal = data['total'];
-          if (newTotal != total) {
-            total = newTotal;
-            await _localDataSource.cacheLikedSongsCount(total);
-          }
+        // Check if total changed during pagination
+        if (remoteData.total != total) {
+          total = remoteData.total;
+          await _localDataSource.cacheLikedSongsCount(total);
         }
       } catch (e) {
         log('Error refreshing liked songs background at offset $offset: $e');
@@ -196,19 +192,10 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   @override
   Future<Playlist?> getPlaylistById(String id) async {
     try {
-      final data = await _apiClient.getJson('/playlists/$id');
-      final spotifyPlaylist = SpotifyPlaylist.fromJson(data);
+      final spotifyPlaylist = await _remoteDataSource.getPlaylist(id);
+      final tracks = await _remoteDataSource.getPlaylistTracks(id);
 
-      final tracksData = await _apiClient.getJson('/playlists/$id/tracks');
-      final tracksItems = tracksData['items'] as List;
-      final songs = tracksItems
-          .map((item) {
-            if (item['track'] == null) return null;
-            final track = SpotifyTrack.fromJson(item['track']);
-            return _mapSpotifyTrackToSong(track);
-          })
-          .whereType<Song>()
-          .toList();
+      final songs = tracks.map(SpotifyMapper.toSong).toList();
 
       return Playlist(
         id: spotifyPlaylist.id,
@@ -231,10 +218,9 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       return _cachedPlaylists!;
     }
     try {
-      final data = await _apiClient.getJson('/me/playlists');
-      final items = data['items'] as List;
-      _cachedPlaylists = items.map((item) {
-        final spotifyPlaylist = SpotifyPlaylist.fromJson(item);
+      final spotifyPlaylists = await _remoteDataSource.getUserPlaylists();
+
+      _cachedPlaylists = spotifyPlaylists.map((spotifyPlaylist) {
         return Playlist(
           id: spotifyPlaylist.id,
           title: spotifyPlaylist.name,
@@ -258,10 +244,9 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       return _cachedUserProfileImage;
     }
     try {
-      final data = await _apiClient.getJson('/me');
-      final images = data['images'] as List;
-      if (images.isNotEmpty) {
-        _cachedUserProfileImage = images.first['url'] as String;
+      final user = await _remoteDataSource.getCurrentUserProfile();
+      if (user.images.isNotEmpty) {
+        _cachedUserProfileImage = user.images.first.url;
         return _cachedUserProfileImage;
       }
       return null;
@@ -274,15 +259,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   @override
   Future<void> addSongToLiked(Song song) async {
     try {
-      var response = await _apiClient.put(
-        '/me/tracks',
-        body: {
-          "ids": [song.id],
-        },
-      );
-      if (response.statusCode != 200) {
-        throw Exception('Failed to add song to liked');
-      }
+      await _remoteDataSource.addTrackToLiked(song.id);
 
       await _localDataSource.addSongToLiked(song);
       final count = await _localDataSource.getLikedSongsCount();
@@ -301,15 +278,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   @override
   Future<void> removeSongFromLiked(String songId) async {
     try {
-      var response = await _apiClient.delete(
-        '/me/tracks',
-        body: {
-          "ids": [songId],
-        },
-      );
-      if (response.statusCode != 200) {
-        throw Exception('Failed to remove song from liked');
-      }
+      await _remoteDataSource.removeTrackFromLiked(songId);
 
       await _localDataSource.removeSongFromLiked(songId);
       final count = await _localDataSource.getLikedSongsCount();
@@ -336,30 +305,10 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     }
 
     try {
-      final response = await _apiClient.getJson(
-        '/me/tracks/contains?ids=$songId',
-      );
-      if (response is List && response.isNotEmpty) {
-        return response.first as bool;
-      }
-      return false;
+      return await _remoteDataSource.checkContainsTrack(songId);
     } catch (e) {
       log('Error checking if song is liked: $e');
       return false;
     }
-  }
-
-  Song _mapSpotifyTrackToSong(SpotifyTrack track) {
-    return Song(
-      id: track.id,
-      title: track.name,
-      artist: track.artists.map((a) => a.name).join(', '),
-      album: track.album.name,
-      coverUrl: track.album.images.isNotEmpty
-          ? track.album.images.first.url
-          : 'https://via.placeholder.com/300',
-      duration: Duration(milliseconds: track.durationMs),
-      assetUrl: track.previewUrl ?? '',
-    );
   }
 }
