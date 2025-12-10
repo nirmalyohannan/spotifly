@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:spotifly/shared/data/data_sources/playlist_local_data_source.dart';
 import 'package:spotifly/core/network/spotify_api_client.dart';
 import 'package:spotifly/core/services/spotify_auth_service.dart';
 import 'package:spotifly/features/player/data/datasources/youtube_remote_data_source.dart';
@@ -52,8 +53,14 @@ void setupServiceLocator() {
   );
 
   // Library Feature
+  getIt.registerLazySingleton<PlaylistLocalDataSource>(
+    () => PlaylistLocalDataSourceImpl(),
+  );
   getIt.registerLazySingleton<PlaylistRepository>(
-    () => PlaylistRepositoryImpl(),
+    () => PlaylistRepositoryImpl(
+      getIt<SpotifyApiClient>(),
+      getIt<PlaylistLocalDataSource>(),
+    ),
   );
   getIt.registerLazySingleton<GetLikedSongs>(
     () => GetLikedSongs(getIt<PlaylistRepository>()),

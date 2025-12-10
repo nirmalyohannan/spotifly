@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:spotifly/shared/data/models/hive_song.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/services/spotify_auth_service.dart';
@@ -13,6 +15,9 @@ import 'package:spotifly/features/shell/presentation/pages/main_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  Hive.registerAdapter(HiveSongAdapter());
+
   setupServiceLocator();
 
   final authService = getIt<SpotifyAuthService>();

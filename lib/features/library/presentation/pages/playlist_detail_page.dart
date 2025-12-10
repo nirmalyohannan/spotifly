@@ -1,7 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/utils/flight_shuttle_builder.dart';
-import 'package:spotifly/shared/data/repositories/playlist_repository_impl.dart';
+import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
 import '../../../../shared/domain/entities/playlist.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
@@ -23,7 +24,7 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
   @override
   void initState() {
     super.initState();
-    _playlistFuture = PlaylistRepositoryImpl().getPlaylistById(
+    _playlistFuture = getIt<PlaylistRepository>().getPlaylistById(
       widget.playlist.id,
     );
   }

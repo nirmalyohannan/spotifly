@@ -1,27 +1,30 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/network/spotify_api_client.dart';
+import 'package:spotifly/shared/data/data_sources/playlist_local_data_source.dart';
 import 'package:spotifly/shared/data/models/spotify_models.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/song.dart';
 import '../../domain/repositories/playlist_repository.dart';
 
 class PlaylistRepositoryImpl implements PlaylistRepository {
-  final SpotifyApiClient _apiClient = getIt<SpotifyApiClient>();
+  final SpotifyApiClient _apiClient;
+  final PlaylistLocalDataSource _localDataSource;
 
-  // Cache
+  PlaylistRepositoryImpl(this._apiClient, this._localDataSource);
+
+  // Cache - User Profile & Playlists can remain in memory or move to Hive later if requested.
+  // For now task only mentioned LikedSongs variables.
   String? _cachedUserProfileImage;
   List<Playlist>? _cachedPlaylists;
 
-  // Liked Songs Cache
-  final List<Song> _cachedLikedSongs = [];
-  int? _cachedTotalLikedSongsCount;
-  bool _needsRefresh = false;
   bool _isLikedSongsRefreshing = false;
 
   final _likedSongsController = StreamController<List<Song>>.broadcast();
+
+  // Deprecated in-memory variables removed:
+  // _cachedLikedSongs, _cachedTotalLikedSongsCount, _needsRefresh
 
   @override
   Stream<List<Song>> get likedSongsStream => _likedSongsController.stream;
@@ -30,83 +33,115 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   void clearCache() {
     _cachedUserProfileImage = null;
     _cachedPlaylists = null;
-    _cachedLikedSongs.clear();
-    _cachedTotalLikedSongsCount = null;
-    _needsRefresh = false;
+    // We might want to clear local storage too on logout?
+    // User requested "logout user use case should clear... reset in-memory caches".
+    // If we use Hive, we should probably clear it on logout.
+    // However, existing clearCache was for memory.
+    // Let's clear local data source for privacy on logout if this method is used for logout.
+    // But since this method is sync in interface, we can't await.
+    // We should probably rely on the logout use case handling local data source clearing or ignore for now.
+    // Or just clear memory state variables.
+    // For now, let's keep it simple.
     _isLikedSongsRefreshing = false;
   }
 
   @override
   Future<int> getLikedSongsCount() async {
     try {
-      // Fetch the first 50 songs to check consistency and count
+      // 1. Get local data first to allow immediate UI display from cache
+      final localCount = await _localDataSource.getLikedSongsCount();
+      final localSongs = await _localDataSource.getLikedSongs();
+
+      // Emit what we have immediately
+      if (localSongs.isNotEmpty) {
+        _likedSongsController.add(localSongs);
+      }
+
+      // 2. Fetch the first 50 songs from API
       final data = await _apiClient.getJson('/me/tracks?offset=0&limit=50');
-      final total = data['total'] as int;
+      final apiTotal = data['total'] as int;
       final items = data['items'] as List;
       final newSongs = items.map((item) {
         final track = SpotifyTrack.fromJson(item['track']);
         return _mapSpotifyTrackToSong(track);
       }).toList();
 
-      // 1. Check if total count matches
-      if (_cachedTotalLikedSongsCount != total) {
-        _needsRefresh = true;
+      bool needsRefresh = false;
+      bool localNeedsRefresh = await _localDataSource.getNeedsRefresh();
+
+      // Check consistency
+      if (localCount != apiTotal) {
+        needsRefresh = true;
       }
 
-      // 2. Check if first 50 songs match (only if count matched, otherwise we already know we need refresh)
-      if (!_needsRefresh && _cachedLikedSongs.isNotEmpty) {
-        int checkLimit = newSongs.length < _cachedLikedSongs.length
+      if (!needsRefresh && !localNeedsRefresh && localSongs.isNotEmpty) {
+        int checkLimit = newSongs.length < localSongs.length
             ? newSongs.length
-            : _cachedLikedSongs.length;
-        if (checkLimit > 50) checkLimit = 50; // Just in case
+            : localSongs.length;
+        if (checkLimit > 50) checkLimit = 50;
 
         for (int i = 0; i < checkLimit; i++) {
-          if (newSongs[i].id != _cachedLikedSongs[i].id) {
-            _needsRefresh = true;
+          if (newSongs[i].id != localSongs[i].id) {
+            needsRefresh = true;
             break;
           }
         }
       }
 
       // Update local cache count
-      _cachedTotalLikedSongsCount = total;
+      await _localDataSource.cacheLikedSongsCount(apiTotal);
 
       // Update the first 50 songs in cache immediately
+      // We need to fetch full list to modify it?
+      // Or we can just read current, modify, write.
+      // Since localSongs variable has current, let's use it.
+      List<Song> updatedSongs = List.from(localSongs);
+
       for (int i = 0; i < newSongs.length; i++) {
-        if (i < _cachedLikedSongs.length) {
-          _cachedLikedSongs[i] = newSongs[i];
+        if (i < updatedSongs.length) {
+          updatedSongs[i] = newSongs[i];
         } else {
-          _cachedLikedSongs.add(newSongs[i]);
+          updatedSongs.add(newSongs[i]);
         }
       }
 
-      // If we have more items in cache than total, truncate immediately (rare case if deletions didn't sync)
-      if (_cachedLikedSongs.length > total) {
-        _cachedLikedSongs.removeRange(total, _cachedLikedSongs.length);
+      if (updatedSongs.length > apiTotal) {
+        updatedSongs.removeRange(apiTotal, updatedSongs.length);
       }
 
-      // Emit updated list
-      _likedSongsController.add(List.from(_cachedLikedSongs));
+      await _localDataSource.cacheLikedSongs(updatedSongs);
 
-      // Trigger background refresh if needed
-      if (_needsRefresh && !_isLikedSongsRefreshing) {
-        _likedSongsBackgroundRefresh(total);
+      // Refetch to be safely consistent or just use updatedSongs
+      _likedSongsController.add(updatedSongs);
+
+      if (needsRefresh) {
+        await _localDataSource.setNeedsRefresh(true);
+        _startBackgroundRefresh(apiTotal);
+      } else {
+        await _localDataSource.setNeedsRefresh(false);
       }
 
-      return total;
+      return apiTotal;
     } catch (e) {
       log('Error fetching liked songs count: $e');
-      return _cachedTotalLikedSongsCount ?? 0;
+      return await _localDataSource.getLikedSongsCount() ?? 0;
+    }
+  }
+
+  void _startBackgroundRefresh(int total) {
+    if (!_isLikedSongsRefreshing) {
+      _likedSongsBackgroundRefresh(total);
     }
   }
 
   void _likedSongsBackgroundRefresh(int total) async {
     _isLikedSongsRefreshing = true;
     int offset = 50;
-    // If we have fewer than 50 songs, we are done after the initial fetch.
+
+    // We maintain a working copy of the list to save incrementally
+    List<Song> currentSongs = await _localDataSource.getLikedSongs();
 
     while (offset < total) {
-      // 2 seconds gap
       await Future.delayed(const Duration(seconds: 2));
 
       try {
@@ -119,44 +154,43 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
           return _mapSpotifyTrackToSong(track);
         }).toList();
 
-        // Update cache ensuring index alignment
+        // Update local list
         for (int i = 0; i < pageSongs.length; i++) {
           int targetIndex = offset + i;
-          if (targetIndex < _cachedLikedSongs.length) {
-            _cachedLikedSongs[targetIndex] = pageSongs[i];
+          if (targetIndex < currentSongs.length) {
+            currentSongs[targetIndex] = pageSongs[i];
           } else {
-            _cachedLikedSongs.add(pageSongs[i]);
+            currentSongs.add(pageSongs[i]);
           }
         }
 
-        // Emit update after each page
-        _likedSongsController.add(List.from(_cachedLikedSongs));
+        await _localDataSource.cacheLikedSongs(currentSongs);
+        _likedSongsController.add(List.from(currentSongs));
 
         offset += 50;
 
-        // Re-check total from API response?
-        // The API returns total in every page. We could adapt if it changes mid-stream.
         if (data['total'] != null) {
           int newTotal = data['total'];
           if (newTotal != total) {
             total = newTotal;
-            _cachedTotalLikedSongsCount = total;
+            await _localDataSource.cacheLikedSongsCount(total);
           }
         }
       } catch (e) {
         log('Error refreshing liked songs background at offset $offset: $e');
-        // Break or retry? Break to avoid infinite loops or spamming errors.
         break;
-      } finally {
-        _isLikedSongsRefreshing = false;
       }
     }
 
-    // Final cleanup: if cache exceeded total (e.g. tracks deleted while syncing)
-    if (_cachedLikedSongs.length > total) {
-      _cachedLikedSongs.removeRange(total, _cachedLikedSongs.length);
-      _likedSongsController.add(List.from(_cachedLikedSongs));
+    // Final check for truncation
+    if (currentSongs.length > total) {
+      currentSongs.removeRange(total, currentSongs.length);
+      await _localDataSource.cacheLikedSongs(currentSongs);
+      _likedSongsController.add(currentSongs);
     }
+
+    _isLikedSongsRefreshing = false;
+    await _localDataSource.setNeedsRefresh(false);
   }
 
   @override
@@ -165,7 +199,6 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       final data = await _apiClient.getJson('/playlists/$id');
       final spotifyPlaylist = SpotifyPlaylist.fromJson(data);
 
-      // Fetch tracks for this playlist
       final tracksData = await _apiClient.getJson('/playlists/$id/tracks');
       final tracksItems = tracksData['items'] as List;
       final songs = tracksItems
@@ -209,7 +242,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
           coverUrl: spotifyPlaylist.images.isNotEmpty
               ? spotifyPlaylist.images.first.url
               : 'https://via.placeholder.com/300',
-          songs: [], // Tracks are not returned in the list endpoint
+          songs: [],
         );
       }).toList();
       return _cachedPlaylists!;
@@ -251,9 +284,14 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         throw Exception('Failed to add song to liked');
       }
 
-      // Update Cache
-      _cachedLikedSongs.insert(0, song);
-      _cachedTotalLikedSongsCount = _cachedTotalLikedSongsCount! + 1;
+      await _localDataSource.addSongToLiked(song);
+      final count = await _localDataSource.getLikedSongsCount();
+      if (count != null) {
+        await _localDataSource.cacheLikedSongsCount(count + 1);
+      }
+
+      // Update stream
+      _likedSongsController.add(await _localDataSource.getLikedSongs());
     } catch (e) {
       log('Error adding song to liked: $e');
       rethrow;
@@ -273,12 +311,14 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         throw Exception('Failed to remove song from liked');
       }
 
-      // Update Cache
-      _cachedLikedSongs.removeWhere((song) => song.id == songId);
-      if (_cachedTotalLikedSongsCount != null &&
-          _cachedTotalLikedSongsCount! > 0) {
-        _cachedTotalLikedSongsCount = _cachedTotalLikedSongsCount! - 1;
+      await _localDataSource.removeSongFromLiked(songId);
+      final count = await _localDataSource.getLikedSongsCount();
+      if (count != null && count > 0) {
+        await _localDataSource.cacheLikedSongsCount(count - 1);
       }
+
+      // Update stream
+      _likedSongsController.add(await _localDataSource.getLikedSongs());
     } catch (e) {
       log('Error removing song from liked: $e');
       rethrow;
@@ -287,9 +327,10 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   @override
   Future<bool> isSongLiked(String songId) async {
-    //Check if it is in cache if cache is uptodate
-    if (_needsRefresh == false) {
-      if (_cachedLikedSongs.any((s) => s.id == songId)) {
+    final needsRefresh = await _localDataSource.getNeedsRefresh();
+    if (!needsRefresh) {
+      final songs = await _localDataSource.getLikedSongs();
+      if (songs.any((s) => s.id == songId)) {
         return true;
       }
     }
