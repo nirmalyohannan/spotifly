@@ -7,6 +7,8 @@ import 'package:spotifly/features/home/presentation/bloc/home_bloc.dart';
 import 'package:spotifly/shared/presentation/widgets/cards/music_card.dart';
 import 'package:spotifly/shared/presentation/widgets/horizontal_card_list.dart';
 import 'package:spotifly/shared/presentation/widgets/section_header.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -86,7 +88,16 @@ class _HomePageState extends State<HomePage>
                                     subtitle: song.artist,
                                     imageUrl: song.coverUrl,
                                     size: 120,
-                                    onTap: () {},
+                                    onTap: () {
+                                      final index = state.recentlyPlayed
+                                          .indexOf(song);
+                                      context.read<PlayerBloc>().add(
+                                        SetPlaylistEvent(
+                                          songs: state.recentlyPlayed,
+                                          initialIndex: index,
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                               ),
