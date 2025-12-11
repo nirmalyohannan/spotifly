@@ -1,6 +1,6 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:spotifly/core/network/interceptors/rate_limit_interceptor.dart';
+import 'package:spotifly/core/network/interceptors/logging_interceptor.dart';
 import 'package:spotifly/core/services/spotify_auth_service.dart';
 
 class SpotifyApiClient {
@@ -18,10 +18,10 @@ class SpotifyApiClient {
         interval: const Duration(seconds: 1),
       ),
     );
+    _dio.interceptors.add(LoggingInterceptor());
   }
 
   Future<Response> get(String endpoint) async {
-    logRequest(endpoint: endpoint, method: 'GET');
     final token = await _authService.getAccessToken();
     if (token == null) {
       throw Exception('Not authenticated');
@@ -47,7 +47,6 @@ class SpotifyApiClient {
   }
 
   Future<dynamic> getJson(String endpoint) async {
-    logRequest(endpoint: endpoint, method: 'GET_JSON');
     final response = await get(endpoint);
     if (response.statusCode != null &&
         response.statusCode! >= 200 &&
@@ -62,7 +61,6 @@ class SpotifyApiClient {
   }
 
   Future<Response> put(String endpoint, {dynamic body}) async {
-    logRequest(endpoint: endpoint, method: 'PUT', body: body);
     final token = await _authService.getAccessToken();
     if (token == null) {
       throw Exception('Not authenticated');
@@ -98,7 +96,6 @@ class SpotifyApiClient {
   }
 
   Future<Response> delete(String endpoint, {dynamic body}) async {
-    logRequest(endpoint: endpoint, method: 'DELETE', body: body);
     final token = await _authService.getAccessToken();
     if (token == null) {
       throw Exception('Not authenticated');
@@ -131,16 +128,5 @@ class SpotifyApiClient {
       }
     }
     return response;
-  }
-
-  void logRequest({
-    required String endpoint,
-    required String method,
-    dynamic body,
-  }) {
-    var time = DateTime.now();
-    var formattedTime =
-        '${time.hour}:${time.minute}:${time.second}.${time.millisecond}';
-    log('$formattedTime | $method | $endpoint');
   }
 }

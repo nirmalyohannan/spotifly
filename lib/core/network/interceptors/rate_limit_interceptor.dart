@@ -24,7 +24,7 @@ class RateLimitInterceptor extends Interceptor {
         var endpoint = options.path;
         var method = options.method;
         log(
-          'Rate limit. Waiting ${(interval - diff).inMilliseconds}s for $method $endpoint',
+          'Rate limit. Waiting ${(interval - diff).inMilliseconds}ms for $method $endpoint',
         );
         await Future.delayed(interval - diff);
       }
