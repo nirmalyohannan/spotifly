@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
@@ -91,6 +92,8 @@ class AudioPlayerHandler extends BaseAudioHandler {
       try {
         await _player.setUrl(url);
         play();
+      } on SocketException catch (e) {
+        log("Error playing audio: $e");
       } catch (e) {
         log("Error playing audio: $e");
       }

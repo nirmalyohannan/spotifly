@@ -159,10 +159,13 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     });
 
     _audioHandler.customEvent.listen((event) {
-      if (event == 'skipToNext') {
-        add(PlayNextEvent());
-      } else if (event == 'skipToPrevious') {
-        add(PlayPreviousEvent());
+      switch (event) {
+        case 'skipToNext':
+          add(PlayNextEvent());
+          break;
+        case 'skipToPrevious':
+          add(PlayPreviousEvent());
+          break;
       }
     });
 
