@@ -46,3 +46,21 @@ class CheckLikedStatus extends PlayerEvent {
   final String songId;
   CheckLikedStatus(this.songId);
 }
+
+class SetPlaylistEvent extends PlayerEvent {
+  final List<Song> songs;
+  final int initialIndex;
+  final bool isShuffle;
+
+  SetPlaylistEvent({
+    required this.songs,
+    this.initialIndex = 0,
+    this.isShuffle = false,
+  });
+}
+
+class PlayNextEvent extends PlayerEvent {}
+
+class PlayPreviousEvent extends PlayerEvent {}
+
+class PlayerCompleteEvent extends PlayerEvent {}

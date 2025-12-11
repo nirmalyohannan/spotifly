@@ -1,14 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
-import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 import 'package:spotifly/shared/domain/entities/song.dart';
 
 class LikedSongsListItem extends StatelessWidget {
-  const LikedSongsListItem({super.key, required this.song});
+  const LikedSongsListItem({super.key, required this.song, this.onTap});
 
   final Song song;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +25,7 @@ class LikedSongsListItem extends StatelessWidget {
       ),
       title: Text(song.title, style: const TextStyle(color: Colors.white)),
       subtitle: Text(song.artist, style: const TextStyle(color: Colors.grey)),
-      onTap: () {
-        context.read<PlayerBloc>().add(SetSongEvent(song));
-      },
+      onTap: onTap,
     );
   }
 }

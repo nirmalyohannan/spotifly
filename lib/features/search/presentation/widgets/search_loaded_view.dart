@@ -22,8 +22,11 @@ class SearchLoadedView extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
-          ...results.songs.map(
-            (song) => ListTile(
+          ...results.songs.asMap().entries.map((entry) {
+            final index = entry.key;
+            final song = entry.value;
+
+            return ListTile(
               leading: CachedNetworkImage(
                 imageUrl: song.coverUrl,
                 width: 50,
@@ -39,10 +42,12 @@ class SearchLoadedView extends StatelessWidget {
               title: Text(song.title),
               subtitle: Text(song.artist),
               onTap: () {
-                context.read<PlayerBloc>().add(SetSongEvent(song));
+                context.read<PlayerBloc>().add(
+                  SetPlaylistEvent(songs: results.songs, initialIndex: index),
+                );
               },
-            ),
-          ),
+            );
+          }),
         ],
         if (results.playlists.isNotEmpty) ...[
           const Padding(

@@ -30,6 +30,8 @@ class PlayerTitleAndArtist extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
               Text(
                 song.artist,
@@ -37,6 +39,8 @@ class PlayerTitleAndArtist extends StatelessWidget {
                   fontSize: 18,
                   color: Colors.white.withValues(alpha: 0.7),
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

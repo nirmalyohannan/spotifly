@@ -106,7 +106,12 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                             style: const TextStyle(color: Colors.grey),
                           ),
                           onTap: () {
-                            context.read<PlayerBloc>().add(SetSongEvent(song));
+                            context.read<PlayerBloc>().add(
+                              SetPlaylistEvent(
+                                songs: playlist.songs,
+                                initialIndex: index,
+                              ),
+                            );
                           },
                         );
                       }, childCount: playlist.songs.length),

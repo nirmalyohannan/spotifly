@@ -9,6 +9,11 @@ class PlayerState {
   final Duration position;
   final Duration duration;
   final bool isInitialBuffer;
+  final List<Song> queue;
+  final List<Song> originalQueue;
+  final int currentIndex;
+  final bool isShuffleMode;
+  final bool isRepeatMode;
   final String? message;
 
   const PlayerState({
@@ -18,6 +23,11 @@ class PlayerState {
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.isInitialBuffer = false,
+    this.queue = const [],
+    this.originalQueue = const [],
+    this.currentIndex = 0,
+    this.isShuffleMode = false,
+    this.isRepeatMode = false,
     this.message,
   });
 
@@ -29,6 +39,11 @@ class PlayerState {
     Duration? duration,
     String? message,
     bool? isInitialBuffer,
+    List<Song>? queue,
+    List<Song>? originalQueue,
+    int? currentIndex,
+    bool? isShuffleMode,
+    bool? isRepeatMode,
   }) {
     return PlayerState(
       currentSong: currentSong ?? this.currentSong,
@@ -38,6 +53,11 @@ class PlayerState {
       duration: duration ?? this.duration,
       isInitialBuffer: isInitialBuffer ?? this.isInitialBuffer,
       message: message ?? this.message,
+      queue: queue ?? this.queue,
+      originalQueue: originalQueue ?? this.originalQueue,
+      currentIndex: currentIndex ?? this.currentIndex,
+      isShuffleMode: isShuffleMode ?? this.isShuffleMode,
+      isRepeatMode: isRepeatMode ?? this.isRepeatMode,
     );
   }
 }

@@ -5,6 +5,9 @@ import 'package:spotifly/features/library/presentation/widgets/liked_songs_shimm
 import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_bloc.dart';
 import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_state.dart';
 import 'package:spotifly/features/player/presentation/widgets/mini_player.dart';
+import 'package:spotifly/shared/domain/entities/song.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 
 class LikedSongsPage extends StatefulWidget {
   const LikedSongsPage({super.key});
@@ -79,7 +82,28 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                         duration: const Duration(milliseconds: 600),
                         child: song == null
                             ? LikedSongsShimmerItem(index: index)
-                            : LikedSongsListItem(song: song),
+                            : LikedSongsListItem(
+                                song: song,
+                                onTap: () {
+                                  // Filter out nulls to get the actual list of songs to play
+                                  final validSongs = state.songs
+                                      .where((s) => s != null)
+                                      .cast<Song>()
+                                      .toList();
+
+                                  // Find the correct index in the valid list
+                                  final initialIndex = validSongs.indexOf(song);
+
+                                  if (initialIndex != -1) {
+                                    context.read<PlayerBloc>().add(
+                                      SetPlaylistEvent(
+                                        songs: validSongs,
+                                        initialIndex: initialIndex,
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
                       );
                     }, childCount: state.totalCount),
                   );

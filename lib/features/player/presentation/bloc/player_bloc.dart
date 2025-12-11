@@ -9,6 +9,7 @@ import 'package:spotifly/features/player/domain/usecases/is_song_liked.dart';
 import 'package:spotifly/features/player/domain/usecases/remove_song_from_liked.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
+import 'package:spotifly/shared/domain/entities/song.dart';
 
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   final AudioPlayer _audioPlayer;
@@ -109,6 +110,12 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     on<UpdateIsPlayingEvent>(
       (event, emit) => emit(state.copyWith(isPlaying: event.isPlaying)),
     );
+
+    // Playlist Events
+    on<SetPlaylistEvent>(_onSetPlaylist);
+    on<PlayNextEvent>(_onPlayNext);
+    on<PlayPreviousEvent>(_onPlayPrevious);
+    on<PlayerCompleteEvent>((event, emit) => add(PlayNextEvent()));
   }
 
   void _setupStreams() {
@@ -124,7 +131,95 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
     _audioPlayer.playerStateStream.listen((playerState) {
       add(UpdateIsPlayingEvent(playerState.playing));
+      if (playerState.processingState == ProcessingState.completed) {
+        add(PlayerCompleteEvent());
+      }
     });
+  }
+
+  Future<void> _onSetPlaylist(
+    SetPlaylistEvent event,
+    Emitter<PlayerState> emit,
+  ) async {
+    final List<Song> originalQueue = List.from(event.songs);
+    List<Song> queue = List.from(event.songs);
+    int currentIndex = event.initialIndex;
+
+    if (event.isShuffle) {
+      // shuffle logic:
+      // 1. Get the starting song
+      final startingSong = queue[currentIndex];
+      // 2. Remove it from the list to be shuffled
+      queue.removeAt(currentIndex);
+      // 3. Shuffle the rest
+      queue.shuffle();
+      // 4. Insert starting song at the beginning
+      queue.insert(0, startingSong);
+      // 5. Set current index to 0
+      currentIndex = 0;
+    }
+
+    emit(
+      state.copyWith(
+        originalQueue: originalQueue,
+        queue: queue,
+        currentIndex: currentIndex,
+        isShuffleMode: event.isShuffle,
+        isRepeatMode: false,
+      ),
+    );
+
+    if (queue.isNotEmpty) {
+      add(SetSongEvent(queue[currentIndex]));
+    }
+  }
+
+  Future<void> _onPlayNext(
+    PlayNextEvent event,
+    Emitter<PlayerState> emit,
+  ) async {
+    if (state.queue.isEmpty) return;
+
+    int nextIndex = state.currentIndex + 1;
+
+    // Handle end of playlist
+    if (nextIndex >= state.queue.length) {
+      if (state.isRepeatMode) {
+        nextIndex = 0;
+      } else {
+        // Stop playing if not repeat mode
+        return;
+      }
+    }
+
+    emit(state.copyWith(currentIndex: nextIndex));
+    add(SetSongEvent(state.queue[nextIndex]));
+  }
+
+  Future<void> _onPlayPrevious(
+    PlayPreviousEvent event,
+    Emitter<PlayerState> emit,
+  ) async {
+    if (state.queue.isEmpty) return;
+
+    // If more than 3 seconds in, restart current song
+    if (_audioPlayer.position.inSeconds > 3) {
+      _audioPlayer.seek(Duration.zero);
+      return;
+    }
+
+    int prevIndex = state.currentIndex - 1;
+
+    if (prevIndex < 0) {
+      if (state.isRepeatMode) {
+        prevIndex = state.queue.length - 1;
+      } else {
+        prevIndex = 0; // Stay at first song
+      }
+    }
+
+    emit(state.copyWith(currentIndex: prevIndex));
+    add(SetSongEvent(state.queue[prevIndex]));
   }
 
   @override
