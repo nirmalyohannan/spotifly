@@ -21,7 +21,11 @@ class RateLimitInterceptor extends Interceptor {
     while (_timestamps.length >= maxRequests) {
       final diff = DateTime.now().difference(_timestamps.first);
       if (diff < interval) {
-        log('Rate limit exceeded. Waiting for ${interval - diff}');
+        var endpoint = options.path;
+        var method = options.method;
+        log(
+          'Rate limit. Waiting ${(interval - diff).inMilliseconds}s for $method $endpoint',
+        );
         await Future.delayed(interval - diff);
       }
 

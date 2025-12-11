@@ -1,6 +1,8 @@
 import 'package:hive_ce/hive.dart';
 import '../../domain/entities/song.dart';
+import '../../domain/entities/playlist.dart';
 import '../models/hive_song.dart';
+import '../models/hive_playlist.dart';
 
 abstract class PlaylistLocalDataSource {
   Future<List<Song>> getLikedSongs();
@@ -13,6 +15,16 @@ abstract class PlaylistLocalDataSource {
 
   Future<bool> getNeedsRefresh();
   Future<void> setNeedsRefresh(bool value);
+
+  Future<void> cacheUserPlaylists(List<Playlist> playlists);
+  Future<List<Playlist>> getUserPlaylists();
+
+  Future<void> cachePlaylistSongs(String playlistId, List<Song> songs);
+  Future<List<Song>> getPlaylistSongs(String playlistId);
+
+  // We can store snapshotId in the playlist object itself in the list,
+  // but we might need a quick lookup or just rely on the list.
+  // Actually, cacheUserPlaylists stores HivePlaylists which have snapshotId.
 }
 
 class PlaylistLocalDataSourceImpl implements PlaylistLocalDataSource {
@@ -92,5 +104,41 @@ class PlaylistLocalDataSourceImpl implements PlaylistLocalDataSource {
   Future<void> setNeedsRefresh(bool value) async {
     final b = await box;
     await b.put(_keyNeedsRefresh, value);
+  }
+
+  @override
+  Future<void> cacheUserPlaylists(List<Playlist> playlists) async {
+    final b = await box;
+    final hivePlaylists = playlists
+        .map((p) => HivePlaylist.fromDomain(p))
+        .toList();
+    await b.put('user_playlists', hivePlaylists);
+  }
+
+  @override
+  Future<List<Playlist>> getUserPlaylists() async {
+    final b = await box;
+    final dynamic data = b.get('user_playlists');
+    if (data != null && data is List) {
+      return data.cast<HivePlaylist>().map((e) => e.toDomain()).toList();
+    }
+    return [];
+  }
+
+  @override
+  Future<void> cachePlaylistSongs(String playlistId, List<Song> songs) async {
+    final b = await box;
+    final hiveSongs = songs.map((s) => HiveSong.fromDomain(s)).toList();
+    await b.put('playlist_songs_$playlistId', hiveSongs);
+  }
+
+  @override
+  Future<List<Song>> getPlaylistSongs(String playlistId) async {
+    final b = await box;
+    final dynamic data = b.get('playlist_songs_$playlistId');
+    if (data != null && data is List) {
+      return data.cast<HiveSong>().map((e) => e.toDomain()).toList();
+    }
+    return [];
   }
 }

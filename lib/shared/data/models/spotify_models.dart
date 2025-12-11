@@ -13,14 +13,19 @@ class SpotifyUser {
 
   factory SpotifyUser.fromJson(Map<String, dynamic> json) {
     return SpotifyUser(
-      id: json['id'],
-      displayName: json['display_name'],
-      email: json['email'],
-      images:
-          (json['images'] as List?)
-              ?.map((e) => SpotifyImage.fromJson(e))
-              .toList() ??
-          [],
+      id: json['id']?.toString() ?? 'unknown',
+      displayName: json['display_name']?.toString() ?? 'Unknown User',
+      email: json['email']?.toString(),
+      images: json['images'] is List
+          ? (json['images'] as List)
+                .whereType<Map>()
+                .map(
+                  (e) => SpotifyImage.fromJson(
+                    Map<String, dynamic>.from(e as Map),
+                  ),
+                )
+                .toList()
+          : [],
     );
   }
 }
@@ -34,9 +39,13 @@ class SpotifyImage {
 
   factory SpotifyImage.fromJson(Map<String, dynamic> json) {
     return SpotifyImage(
-      url: json['url'],
-      height: json['height'],
-      width: json['width'],
+      url: json['url']?.toString() ?? '',
+      height: json['height'] is int
+          ? json['height']
+          : int.tryParse(json['height']?.toString() ?? ''),
+      width: json['width'] is int
+          ? json['width']
+          : int.tryParse(json['width']?.toString() ?? ''),
     );
   }
 }
@@ -48,6 +57,7 @@ class SpotifyPlaylist {
   final List<SpotifyImage> images;
   final SpotifyUser owner;
   final String? uri;
+  final String snapshotId;
 
   SpotifyPlaylist({
     required this.id,
@@ -56,20 +66,31 @@ class SpotifyPlaylist {
     required this.images,
     required this.owner,
     this.uri,
+    required this.snapshotId,
   });
 
   factory SpotifyPlaylist.fromJson(Map<String, dynamic> json) {
     return SpotifyPlaylist(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      images:
-          (json['images'] as List?)
-              ?.map((e) => SpotifyImage.fromJson(e))
-              .toList() ??
-          [],
-      owner: SpotifyUser.fromJson(json['owner']),
-      uri: json['uri'],
+      id: json['id']?.toString() ?? 'unknown',
+      name: json['name']?.toString() ?? 'Unknown Playlist',
+      description: json['description']?.toString(),
+      images: json['images'] is List
+          ? (json['images'] as List)
+                .whereType<Map>()
+                .map(
+                  (e) => SpotifyImage.fromJson(
+                    Map<String, dynamic>.from(e as Map),
+                  ),
+                )
+                .toList()
+          : [],
+      owner: json['owner'] is Map
+          ? SpotifyUser.fromJson(
+              Map<String, dynamic>.from(json['owner'] as Map),
+            )
+          : SpotifyUser(id: 'unknown', displayName: 'Unknown', images: []),
+      uri: json['uri']?.toString(),
+      snapshotId: json['snapshot_id']?.toString() ?? '',
     );
   }
 }
@@ -95,15 +116,28 @@ class SpotifyTrack {
 
   factory SpotifyTrack.fromJson(Map<String, dynamic> json) {
     return SpotifyTrack(
-      id: json['id'],
-      name: json['name'],
-      artists: (json['artists'] as List)
-          .map((e) => SpotifyArtist.fromJson(e))
-          .toList(),
-      album: SpotifyAlbum.fromJson(json['album']),
-      durationMs: json['duration_ms'],
-      previewUrl: json['preview_url'],
-      uri: json['uri'],
+      id: json['id']?.toString() ?? 'unknown',
+      name: json['name']?.toString() ?? 'Unknown Track',
+      artists: json['artists'] is List
+          ? (json['artists'] as List)
+                .whereType<Map>()
+                .map(
+                  (e) => SpotifyArtist.fromJson(
+                    Map<String, dynamic>.from(e as Map),
+                  ),
+                )
+                .toList()
+          : [],
+      album: json['album'] is Map
+          ? SpotifyAlbum.fromJson(
+              Map<String, dynamic>.from(json['album'] as Map),
+            )
+          : SpotifyAlbum(id: 'unknown', name: 'Unknown Album', images: []),
+      durationMs: json['duration_ms'] is int
+          ? json['duration_ms']
+          : int.tryParse(json['duration_ms']?.toString() ?? '') ?? 0,
+      previewUrl: json['preview_url']?.toString(),
+      uri: json['uri']?.toString(),
     );
   }
 }
@@ -117,11 +151,18 @@ class SpotifyArtist {
 
   factory SpotifyArtist.fromJson(Map<String, dynamic> json) {
     return SpotifyArtist(
-      id: json['id'],
-      name: json['name'],
-      images: (json['images'] as List?)
-          ?.map((e) => SpotifyImage.fromJson(e))
-          .toList(),
+      id: json['id']?.toString() ?? 'unknown',
+      name: json['name']?.toString() ?? 'Unknown Artist',
+      images: json['images'] is List
+          ? (json['images'] as List)
+                .whereType<Map>()
+                .map(
+                  (e) => SpotifyImage.fromJson(
+                    Map<String, dynamic>.from(e as Map),
+                  ),
+                )
+                .toList()
+          : null,
     );
   }
 }
@@ -141,14 +182,19 @@ class SpotifyAlbum {
 
   factory SpotifyAlbum.fromJson(Map<String, dynamic> json) {
     return SpotifyAlbum(
-      id: json['id'],
-      name: json['name'],
-      images:
-          (json['images'] as List?)
-              ?.map((e) => SpotifyImage.fromJson(e))
-              .toList() ??
-          [],
-      releaseDate: json['release_date'],
+      id: json['id']?.toString() ?? 'unknown',
+      name: json['name']?.toString() ?? 'Unknown Album',
+      images: json['images'] is List
+          ? (json['images'] as List)
+                .whereType<Map>()
+                .map(
+                  (e) => SpotifyImage.fromJson(
+                    Map<String, dynamic>.from(e as Map),
+                  ),
+                )
+                .toList()
+          : [],
+      releaseDate: json['release_date']?.toString(),
     );
   }
 }

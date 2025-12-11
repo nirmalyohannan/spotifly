@@ -192,10 +192,74 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   @override
   Future<Playlist?> getPlaylistById(String id) async {
     try {
+      log('Fetching playlist by ID: $id');
       final spotifyPlaylist = await _remoteDataSource.getPlaylist(id);
-      final tracks = await _remoteDataSource.getPlaylistTracks(id);
+      final remoteSnapshotId = spotifyPlaylist.snapshotId;
 
-      final songs = tracks.map(SpotifyMapper.toSong).toList();
+      // 1. Try to get local playlist songs logic if needed,
+      // but here we are fetching full playlist details.
+      // We can check if we have this playlist locally in user playlists to compare snapshotId,
+      // OR we can just check if we have songs for this playlist cached and if they match snapshot?
+      // But we don't store snapshotId with songs list directly,
+      // though we can fetch local user playlists to find the playlist and check snapshotId.
+
+      final localPlaylists = await _localDataSource.getUserPlaylists();
+      final localPlaylist = localPlaylists.cast<Playlist?>().firstWhere(
+        (p) => p?.id == id,
+        orElse: () => null,
+      );
+
+      // If local exists and snapshot matches, return local songs
+      if (localPlaylist != null &&
+          localPlaylist.snapshotId == remoteSnapshotId) {
+        final localSongs = await _localDataSource.getPlaylistSongs(id);
+        if (localSongs.isNotEmpty) {
+          return Playlist(
+            id: spotifyPlaylist.id,
+            title: spotifyPlaylist.name,
+            creator: spotifyPlaylist.owner.displayName,
+            coverUrl: spotifyPlaylist.images.isNotEmpty
+                ? spotifyPlaylist.images.first.url
+                : 'https://via.placeholder.com/300',
+            songs: localSongs,
+            snapshotId: remoteSnapshotId,
+          );
+        }
+      }
+
+      // 2. Fetch all songs from remote (Paginated)
+      List<Song> allSongs = [];
+      int offset = 0;
+      const limit = 50;
+      // First call to get total? Or just loop.
+      // Remote source `getPlaylistTracks` returns `PaginatedSpotifyTracks`.
+      bool hasMore = true;
+
+      while (hasMore) {
+        final paginatedTracks = await _remoteDataSource.getPlaylistTracks(
+          id,
+          offset: offset,
+          limit: limit,
+        );
+
+        final songs = paginatedTracks.items.map(SpotifyMapper.toSong).toList();
+        allSongs.addAll(songs);
+
+        if (paginatedTracks.items.length < limit) {
+          hasMore = false;
+        } else {
+          offset += limit;
+        }
+      }
+
+      // 3. Cache songs
+      await _localDataSource.cachePlaylistSongs(id, allSongs);
+
+      // Also update the playlist object in user playlists list if needed?
+      // Maybe not strictly required if we trust `getUserPlaylists` to update that list periodically.
+      // But for consistency we might want to update the snapshotId in our local playlist list if we found it mismatched?
+      // However, `remoteDataSource.getPlaylist` gave us the new snapshotId.
+      // If we are here, we probably have new songs.
 
       return Playlist(
         id: spotifyPlaylist.id,
@@ -204,37 +268,103 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         coverUrl: spotifyPlaylist.images.isNotEmpty
             ? spotifyPlaylist.images.first.url
             : 'https://via.placeholder.com/300',
-        songs: songs,
+        songs: allSongs,
+        snapshotId: remoteSnapshotId,
       );
     } catch (e) {
       log('Error fetching playlist $id: $e');
+      // Fallback to local
+      final localSongs = await _localDataSource.getPlaylistSongs(id);
+      // We might not have the playlist metadata if we fail to fetch it from remote...
+      // But we can try to find it in local playlists cache.
+      final localPlaylists = await _localDataSource.getUserPlaylists();
+      final localPlaylist = localPlaylists.cast<Playlist?>().firstWhere(
+        (p) => p?.id == id,
+        orElse: () => null,
+      );
+
+      if (localPlaylist != null) {
+        return Playlist(
+          id: localPlaylist.id,
+          title: localPlaylist.title,
+          creator: localPlaylist.creator,
+          coverUrl: localPlaylist.coverUrl,
+          songs: localSongs, // might be empty
+          snapshotId: localPlaylist.snapshotId,
+        );
+      }
       return null;
     }
   }
 
   @override
   Future<List<Playlist>> getPlaylists() async {
-    if (_cachedPlaylists != null) {
-      return _cachedPlaylists!;
-    }
+    // 1. Fetch local playlists first
     try {
-      final spotifyPlaylists = await _remoteDataSource.getUserPlaylists();
-
-      _cachedPlaylists = spotifyPlaylists.map((spotifyPlaylist) {
-        return Playlist(
-          id: spotifyPlaylist.id,
-          title: spotifyPlaylist.name,
-          creator: spotifyPlaylist.owner.displayName,
-          coverUrl: spotifyPlaylist.images.isNotEmpty
-              ? spotifyPlaylist.images.first.url
-              : 'https://via.placeholder.com/300',
-          songs: [],
-        );
-      }).toList();
-      return _cachedPlaylists!;
+      log('Fetching local playlists...');
+      final localPlaylists = await _localDataSource.getUserPlaylists();
+      log('Local playlists found: ${localPlaylists.length}');
+      if (localPlaylists.isNotEmpty) {
+        _cachedPlaylists = localPlaylists;
+      }
     } catch (e) {
+      log('Error fetching local playlists: $e');
+      // Continue to fetch remote
+    }
+
+    try {
+      log('Fetching remote playlists...');
+      // 2. Fetch remote playlists (Paginated)
+      List<Playlist> allRemotePlaylists = [];
+      int offset = 0;
+      const limit = 50;
+      bool hasMore = true;
+
+      while (hasMore) {
+        log('Fetching remote playlists offset: $offset');
+        final spotifyPlaylists = await _remoteDataSource.getUserPlaylists(
+          offset: offset,
+          limit: limit,
+        );
+        log('Remote playlists fetched: ${spotifyPlaylists.length}');
+
+        final playlists = spotifyPlaylists.map((spotifyPlaylist) {
+          return Playlist(
+            id: spotifyPlaylist.id,
+            title: spotifyPlaylist.name,
+            creator: spotifyPlaylist.owner.displayName,
+            coverUrl: spotifyPlaylist.images.isNotEmpty
+                ? spotifyPlaylist.images.first.url
+                : 'https://via.placeholder.com/300',
+            songs: [],
+            snapshotId: spotifyPlaylist.snapshotId,
+          );
+        }).toList();
+
+        allRemotePlaylists.addAll(playlists);
+
+        if (spotifyPlaylists.length < limit) {
+          hasMore = false;
+        } else {
+          offset += limit;
+        }
+      }
+
+      log('Total remote playlists: ${allRemotePlaylists.length}');
+
+      // 3. Update Cache & Local Storage
+      _cachedPlaylists = allRemotePlaylists;
+      await _localDataSource.cacheUserPlaylists(allRemotePlaylists);
+      log('Cached user playlists to Hive');
+
+      return _cachedPlaylists!;
+    } catch (e, stack) {
       log('Error fetching playlists: $e');
-      return [];
+      log('Stack trace: $stack');
+      if (_cachedPlaylists == null || _cachedPlaylists!.isEmpty) {
+        rethrow;
+      }
+      return _cachedPlaylists!;
     }
   }
 

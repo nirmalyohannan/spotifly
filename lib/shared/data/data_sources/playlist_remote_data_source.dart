@@ -12,8 +12,15 @@ abstract class PlaylistRemoteDataSource {
   Future<void> addTrackToLiked(String trackId);
   Future<void> removeTrackFromLiked(String trackId);
   Future<SpotifyPlaylist> getPlaylist(String playlistId);
-  Future<List<SpotifyTrack>> getPlaylistTracks(String playlistId);
-  Future<List<SpotifyPlaylist>> getUserPlaylists();
+  Future<PaginatedSpotifyTracks> getPlaylistTracks(
+    String playlistId, {
+    int offset = 0,
+    int limit = 50,
+  });
+  Future<List<SpotifyPlaylist>> getUserPlaylists({
+    int offset = 0,
+    int limit = 50,
+  });
   Future<SpotifyUser> getCurrentUserProfile();
 }
 
@@ -93,27 +100,59 @@ class PlaylistRemoteDataSourceImpl implements PlaylistRemoteDataSource {
   }
 
   @override
-  Future<List<SpotifyTrack>> getPlaylistTracks(String playlistId) async {
-    // Note: This logic was just fetching default tracks. Pagination might be needed for large playlists
-    // but preserving original logic for now.
+  Future<PaginatedSpotifyTracks> getPlaylistTracks(
+    String playlistId, {
+    int offset = 0,
+    int limit = 50,
+  }) async {
     final tracksData = await _apiClient.getJson(
-      '/playlists/$playlistId/tracks',
+      '/playlists/$playlistId/tracks?offset=$offset&limit=$limit',
     );
-    final tracksItems = tracksData['items'] as List;
-    return tracksItems
+    final tracksItems = (tracksData['items'] as List?) ?? [];
+    final total = (tracksData['total'] as int?) ?? 0;
+
+    final tracks = tracksItems
         .map((item) {
           if (item['track'] == null) return null;
-          return SpotifyTrack.fromJson(item['track']);
+          try {
+            return SpotifyTrack.fromJson(
+              (item['track'] as Map).cast<String, dynamic>(),
+            );
+          } catch (e) {
+            return null;
+          }
         })
         .whereType<SpotifyTrack>()
         .toList();
+
+    return PaginatedSpotifyTracks(items: tracks, total: total);
   }
 
   @override
-  Future<List<SpotifyPlaylist>> getUserPlaylists() async {
-    final data = await _apiClient.getJson('/me/playlists');
-    final items = data['items'] as List;
-    return items.map((item) => SpotifyPlaylist.fromJson(item)).toList();
+  Future<List<SpotifyPlaylist>> getUserPlaylists({
+    int offset = 0,
+    int limit = 50,
+  }) async {
+    final data = await _apiClient.getJson(
+      '/me/playlists?offset=$offset&limit=$limit',
+    );
+    final items = (data['items'] as List?) ?? [];
+    // log('Raw playlists count: ${items.length}');
+    return items
+        .where((item) => item != null)
+        .map((item) {
+          try {
+            return SpotifyPlaylist.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            );
+          } catch (e) {
+            print('Error parsing playlist: $e');
+            print('Failed item: $item');
+            return null;
+          }
+        })
+        .whereType<SpotifyPlaylist>()
+        .toList();
   }
 
   @override

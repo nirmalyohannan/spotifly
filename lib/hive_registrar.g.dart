@@ -3,16 +3,19 @@
 // Check in to version control
 
 import 'package:hive_ce/hive.dart';
+import 'package:spotifly/shared/data/models/hive_playlist.dart';
 import 'package:spotifly/shared/data/models/hive_song.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
+    registerAdapter(HivePlaylistAdapter());
     registerAdapter(HiveSongAdapter());
   }
 }
 
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
+    registerAdapter(HivePlaylistAdapter());
     registerAdapter(HiveSongAdapter());
   }
 }

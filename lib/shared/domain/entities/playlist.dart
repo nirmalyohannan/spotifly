@@ -6,6 +6,7 @@ class Playlist {
   final String creator;
   final String coverUrl;
   final List<Song> songs;
+  final String snapshotId;
 
   Playlist({
     required this.id,
@@ -13,5 +14,6 @@ class Playlist {
     required this.creator,
     required this.coverUrl,
     required this.songs,
+    required this.snapshotId,
   });
 }
