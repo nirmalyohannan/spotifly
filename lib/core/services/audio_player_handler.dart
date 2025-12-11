@@ -35,7 +35,6 @@ class AudioPlayerHandler extends BaseAudioHandler {
         controls: [
           MediaControl.skipToPrevious,
           if (_player.playing) MediaControl.pause else MediaControl.play,
-          MediaControl.stop,
           MediaControl.skipToNext,
         ],
         systemActions: const {
@@ -44,13 +43,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
           MediaAction.seekBackward,
         },
         androidCompactActionIndices: const [0, 1, 3],
-        processingState: const {
-          ProcessingState.idle: AudioProcessingState.idle,
-          ProcessingState.loading: AudioProcessingState.loading,
-          ProcessingState.buffering: AudioProcessingState.buffering,
-          ProcessingState.ready: AudioProcessingState.ready,
-          ProcessingState.completed: AudioProcessingState.completed,
-        }[_player.processingState]!,
+        processingState: _getProcessingState,
         playing: _player.playing,
         updatePosition: _player.position,
         bufferedPosition: _player.bufferedPosition,
@@ -58,6 +51,18 @@ class AudioPlayerHandler extends BaseAudioHandler {
         queueIndex: event.currentIndex,
       ),
     );
+  }
+
+  // Get Current processing state
+  AudioProcessingState get _getProcessingState {
+    final processingStateMap = {
+      ProcessingState.idle: AudioProcessingState.idle,
+      ProcessingState.loading: AudioProcessingState.loading,
+      ProcessingState.buffering: AudioProcessingState.buffering,
+      ProcessingState.ready: AudioProcessingState.ready,
+      ProcessingState.completed: AudioProcessingState.completed,
+    };
+    return processingStateMap[_player.processingState]!;
   }
 
   @override
