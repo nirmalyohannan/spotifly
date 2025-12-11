@@ -51,6 +51,8 @@ dependencies:
   hive_ce: ^2.15.1
   hive_ce_flutter: ^2.3.3
   dio: ^5.9.0
+  audio_service: ^0.18.18
+  audio_session: ^0.2.2
 
 dev_dependencies:
   flutter_test:

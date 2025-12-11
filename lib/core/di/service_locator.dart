@@ -8,6 +8,8 @@ import 'package:spotifly/features/player/data/repositories/player_repository_imp
 import 'package:spotifly/features/player/domain/repositories/player_repository.dart';
 import 'package:spotifly/features/player/domain/usecases/get_audio_stream.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:audio_service/audio_service.dart';
+import 'package:spotifly/core/services/audio_player_handler.dart';
 import 'package:spotifly/features/player/domain/usecases/add_song_to_liked.dart';
 import 'package:spotifly/features/player/domain/usecases/remove_song_from_liked.dart';
 import 'package:spotifly/features/player/domain/usecases/is_song_liked.dart';
@@ -26,13 +28,24 @@ import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/lik
 
 final getIt = GetIt.instance;
 
-void setupServiceLocator() {
+Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<SpotifyAuthService>(() => SpotifyAuthService());
   getIt.registerLazySingleton<SpotifyApiClient>(
     () => SpotifyApiClient(getIt<SpotifyAuthService>()),
   );
 
   // Player Feature
+  final audioHandler = await AudioService.init(
+    builder: () => AudioPlayerHandler(),
+    config: const AudioServiceConfig(
+      androidNotificationChannelId:
+          'com.nirmalyohannan.spotifly.channel.audio', //!
+      androidNotificationChannelName: 'SpotiFly Audio',
+      androidNotificationOngoing: true,
+    ),
+  );
+  getIt.registerSingleton<AudioHandler>(audioHandler);
+
   getIt.registerLazySingleton<YoutubeExplode>(() => YoutubeExplode());
   getIt.registerLazySingleton<YoutubeRemoteDataSource>(
     () => YoutubeRemoteDataSourceImpl(getIt<YoutubeExplode>()),

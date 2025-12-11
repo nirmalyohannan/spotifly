@@ -4,6 +4,7 @@ import 'package:spotifly/shared/data/models/hive_song.dart';
 import 'package:spotifly/shared/data/models/hive_playlist.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/core/di/service_locator.dart';
+import 'package:audio_service/audio_service.dart';
 import 'package:spotifly/core/services/spotify_auth_service.dart';
 import 'package:spotifly/features/auth/presentation/pages/login_page.dart';
 import 'package:spotifly/features/player/domain/usecases/get_audio_stream.dart';
@@ -20,7 +21,7 @@ void main() async {
   Hive.registerAdapter(HiveSongAdapter());
   Hive.registerAdapter(HivePlaylistAdapter());
 
-  setupServiceLocator();
+  await setupServiceLocator();
 
   final authService = getIt<SpotifyAuthService>();
   final token = await authService.getAccessToken();
@@ -29,6 +30,7 @@ void main() async {
     BlocProvider(
       create: (context) => PlayerBloc(
         getAudioStream: getIt<GetAudioStream>(),
+        audioHandler: getIt<AudioHandler>(),
         addSongToLiked: getIt<AddSongToLiked>(),
         removeSongFromLiked: getIt<RemoveSongFromLiked>(),
         isSongLiked: getIt<IsSongLiked>(),

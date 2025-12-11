@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:just_audio/just_audio.dart' hide PlayerState, PlayerEvent;
-import 'package:spotifly/core/youtube_user_agent.dart';
+import 'package:spotifly/core/services/audio_player_handler.dart';
 import 'package:spotifly/features/player/domain/usecases/add_song_to_liked.dart';
 import 'package:spotifly/features/player/domain/usecases/get_audio_stream.dart';
 import 'package:spotifly/features/player/domain/usecases/is_song_liked.dart';
@@ -13,18 +13,19 @@ import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
 import 'package:spotifly/shared/domain/entities/song.dart';
 
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
-  final AudioPlayer _audioPlayer;
+  final AudioHandler _audioHandler;
   final GetAudioStream _getAudioStream;
   final AddSongToLiked _addSongToLiked;
   final RemoveSongFromLiked _removeSongFromLiked;
   final IsSongLiked _isSongLiked;
 
   PlayerBloc({
+    required AudioHandler audioHandler,
     required GetAudioStream getAudioStream,
     required AddSongToLiked addSongToLiked,
     required RemoveSongFromLiked removeSongFromLiked,
     required IsSongLiked isSongLiked,
-  }) : _audioPlayer = AudioPlayer(userAgent: YoutubeUserAgent.userAgent),
+  }) : _audioHandler = audioHandler,
        _getAudioStream = getAudioStream,
        _addSongToLiked = addSongToLiked,
        _removeSongFromLiked = removeSongFromLiked,
@@ -32,8 +33,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
        super(const PlayerState()) {
     _setupStreams();
 
-    on<PlayEvent>((event, emit) => _audioPlayer.play());
-    on<PauseEvent>((event, emit) => _audioPlayer.pause());
+    on<PlayEvent>((event, emit) => _audioHandler.play());
+    on<PauseEvent>((event, emit) => _audioHandler.pause());
     on<TogglePlayEvent>(_onTogglePlayEvent);
     on<CheckLikedStatus>(_onCheckLikedStatus);
 
@@ -41,7 +42,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
     on<SetSongEvent>(_onSetSongEvent);
 
-    on<SeekEvent>((event, emit) => _audioPlayer.seek(event.position));
+    on<SeekEvent>((event, emit) => _audioHandler.seek(event.position));
 
     on<UpdatePositionEvent>(
       (event, emit) => emit(state.copyWith(position: event.position)),
@@ -103,10 +104,10 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     TogglePlayEvent event,
     Emitter<PlayerState> emit,
   ) {
-    if (_audioPlayer.playing) {
-      _audioPlayer.pause();
+    if (state.isPlaying) {
+      _audioHandler.pause();
     } else {
-      _audioPlayer.play();
+      _audioHandler.play();
     }
   }
 
@@ -118,7 +119,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     emit(
       state.copyWith(
         currentSong: event.song,
-        isPlaying: true,
+        isPlaying: true, // Will update via stream, but optimistic update
         isInitialBuffer: true,
       ),
     );
@@ -130,9 +131,19 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         event.song.title,
         event.song.artist,
       );
-      await _audioPlayer.setUrl(audioUrl);
+
+      final mediaItem = MediaItem(
+        id: event.song.id,
+        title: event.song.title,
+        artist: event.song.artist,
+        album: event.song.album,
+        artUri: Uri.parse(event.song.coverUrl),
+        duration: event.song.duration,
+        extras: {'url': audioUrl},
+      );
+
+      await _audioHandler.playMediaItem(mediaItem);
       emit(state.copyWith(isInitialBuffer: false));
-      _audioPlayer.play();
     } catch (e) {
       // In a real app, we would handle errors properly
       log("Error loading audio: $e");
@@ -140,22 +151,33 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   }
 
   void _setupStreams() {
-    _audioPlayer.positionStream.listen((position) {
-      add(UpdatePositionEvent(position));
-    });
-
-    _audioPlayer.durationStream.listen((duration) {
-      if (duration != null) {
-        add(UpdateDurationEvent(duration));
-      }
-    });
-
-    _audioPlayer.playerStateStream.listen((playerState) {
-      add(UpdateIsPlayingEvent(playerState.playing));
-      if (playerState.processingState == ProcessingState.completed) {
+    _audioHandler.playbackState.listen((playbackState) {
+      add(UpdateIsPlayingEvent(playbackState.playing));
+      if (playbackState.processingState == AudioProcessingState.completed) {
         add(PlayerCompleteEvent());
       }
     });
+
+    _audioHandler.customEvent.listen((event) {
+      if (event == 'skipToNext') {
+        add(PlayNextEvent());
+      } else if (event == 'skipToPrevious') {
+        add(PlayPreviousEvent());
+      }
+    });
+
+    // Access specific streams from our handler implementation
+    if (_audioHandler is AudioPlayerHandler) {
+      final handler = _audioHandler as AudioPlayerHandler;
+      handler.positionStream.listen((position) {
+        add(UpdatePositionEvent(position));
+      });
+      handler.durationStream.listen((duration) {
+        if (duration != null) {
+          add(UpdateDurationEvent(duration));
+        }
+      });
+    }
   }
 
   Future<void> _onSetPlaylist(
@@ -224,8 +246,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     if (state.queue.isEmpty) return;
 
     // If more than 3 seconds in, restart current song
-    if (_audioPlayer.position.inSeconds > 3) {
-      _audioPlayer.seek(Duration.zero);
+    if (state.position.inSeconds > 3) {
+      _audioHandler.seek(Duration.zero);
       return;
     }
 
@@ -261,7 +283,13 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     } else {
       queue = List.from(state.originalQueue);
       //find the index of the current song
-      currentIndex = queue.indexOf(state.currentSong!);
+      if (state.currentSong != null) {
+        currentIndex = queue.indexOf(state.currentSong!);
+        // If song not found (shouldn't happen), fallback to 0
+        if (currentIndex == -1) currentIndex = 0;
+      } else {
+        currentIndex = 0;
+      }
     }
 
     emit(
@@ -282,7 +310,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
   @override
   Future<void> close() {
-    _audioPlayer.dispose();
+    // _audioHandler is singleton, do not dispose it here
     return super.close();
   }
 }
