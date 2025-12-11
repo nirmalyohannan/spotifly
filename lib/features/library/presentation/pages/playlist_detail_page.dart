@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:spotifly/core/di/service_locator.dart';
+import 'package:spotifly/core/theme/app_colors.dart';
 import 'package:spotifly/core/utils/flight_shuttle_builder.dart';
 import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
 import '../../../../shared/domain/entities/playlist.dart';
@@ -53,20 +54,37 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                         tag: playlist.id,
                         flightShuttleBuilder:
                             FlightShuttleBuilders.fadeTransition,
-                        child: CachedNetworkImage(
-                          imageUrl: playlist.coverUrl,
-                          fit: BoxFit.cover,
-                          errorWidget: (context, error, stackTrace) =>
-                              Container(
-                                color: Colors.grey,
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.music_note,
-                                    size: 80,
-                                    color: Colors.white,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            CachedNetworkImage(
+                              imageUrl: playlist.coverUrl,
+                              fit: BoxFit.cover,
+                              errorWidget: (context, error, stackTrace) =>
+                                  Container(
+                                    color: Colors.grey,
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.music_note,
+                                        size: 80,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    AppColors.background,
+                                  ],
                                 ),
                               ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

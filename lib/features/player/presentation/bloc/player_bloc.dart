@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -33,71 +34,12 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
     on<PlayEvent>((event, emit) => _audioPlayer.play());
     on<PauseEvent>((event, emit) => _audioPlayer.pause());
-    on<TogglePlayEvent>((event, emit) {
-      if (_audioPlayer.playing) {
-        _audioPlayer.pause();
-      } else {
-        _audioPlayer.play();
-      }
-    });
+    on<TogglePlayEvent>(_onTogglePlayEvent);
+    on<CheckLikedStatus>(_onCheckLikedStatus);
 
-    on<CheckLikedStatus>((event, emit) async {
-      try {
-        final isLiked = await _isSongLiked(event.songId);
-        emit(state.copyWith(isLiked: isLiked));
-      } catch (e) {
-        log("Error checking liked status: $e");
-      }
-    });
+    on<ToggleLikeStatus>(_onToggleLikeStatus);
 
-    on<ToggleLikeStatus>((event, emit) async {
-      final song = state.currentSong;
-      if (song == null) return;
-
-      try {
-        if (state.isLiked) {
-          await _removeSongFromLiked(song.id);
-          emit(
-            state.copyWith(isLiked: false, message: "Removed from Liked Songs"),
-          );
-        } else {
-          if (state.currentSong != null) {
-            await _addSongToLiked(state.currentSong!);
-            emit(
-              state.copyWith(isLiked: true, message: "Added to Liked Songs"),
-            );
-          }
-        }
-      } catch (e) {
-        log("Error toggling like status: $e");
-      }
-    });
-
-    on<SetSongEvent>((event, emit) async {
-      // Update metadata immediately
-      emit(
-        state.copyWith(
-          currentSong: event.song,
-          isPlaying: true,
-          isInitialBuffer: true,
-        ),
-      );
-      add(CheckLikedStatus(event.song.id));
-
-      try {
-        // Use the song metadata to find the audio stream
-        final audioUrl = await _getAudioStream(
-          event.song.title,
-          event.song.artist,
-        );
-        await _audioPlayer.setUrl(audioUrl);
-        emit(state.copyWith(isInitialBuffer: false));
-        _audioPlayer.play();
-      } catch (e) {
-        // In a real app, we would handle errors properly
-        log("Error loading audio: $e");
-      }
-    });
+    on<SetSongEvent>(_onSetSongEvent);
 
     on<SeekEvent>((event, emit) => _audioPlayer.seek(event.position));
 
@@ -116,6 +58,85 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     on<PlayNextEvent>(_onPlayNext);
     on<PlayPreviousEvent>(_onPlayPrevious);
     on<PlayerCompleteEvent>((event, emit) => add(PlayNextEvent()));
+
+    on<ToggleShuffleModeEvent>(_onToggleShuffleMode);
+    on<ToggleRepeatModeEvent>(_onToggleRepeatMode);
+  }
+
+  FutureOr<void> _onToggleLikeStatus(
+    ToggleLikeStatus event,
+    Emitter<PlayerState> emit,
+  ) async {
+    final song = state.currentSong;
+    if (song == null) return;
+
+    try {
+      if (state.isLiked) {
+        await _removeSongFromLiked(song.id);
+        emit(
+          state.copyWith(isLiked: false, message: "Removed from Liked Songs"),
+        );
+      } else {
+        if (state.currentSong != null) {
+          await _addSongToLiked(state.currentSong!);
+          emit(state.copyWith(isLiked: true, message: "Added to Liked Songs"));
+        }
+      }
+    } catch (e) {
+      log("Error toggling like status: $e");
+    }
+  }
+
+  FutureOr<void> _onCheckLikedStatus(
+    CheckLikedStatus event,
+    Emitter<PlayerState> emit,
+  ) async {
+    try {
+      final isLiked = await _isSongLiked(event.songId);
+      emit(state.copyWith(isLiked: isLiked));
+    } catch (e) {
+      log("Error checking liked status: $e");
+    }
+  }
+
+  FutureOr<void> _onTogglePlayEvent(
+    TogglePlayEvent event,
+    Emitter<PlayerState> emit,
+  ) {
+    if (_audioPlayer.playing) {
+      _audioPlayer.pause();
+    } else {
+      _audioPlayer.play();
+    }
+  }
+
+  FutureOr<void> _onSetSongEvent(
+    SetSongEvent event,
+    Emitter<PlayerState> emit,
+  ) async {
+    // Update metadata immediately
+    emit(
+      state.copyWith(
+        currentSong: event.song,
+        isPlaying: true,
+        isInitialBuffer: true,
+      ),
+    );
+    add(CheckLikedStatus(event.song.id));
+
+    try {
+      // Use the song metadata to find the audio stream
+      final audioUrl = await _getAudioStream(
+        event.song.title,
+        event.song.artist,
+      );
+      await _audioPlayer.setUrl(audioUrl);
+      emit(state.copyWith(isInitialBuffer: false));
+      _audioPlayer.play();
+    } catch (e) {
+      // In a real app, we would handle errors properly
+      log("Error loading audio: $e");
+    }
   }
 
   void _setupStreams() {
@@ -220,6 +241,43 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
     emit(state.copyWith(currentIndex: prevIndex));
     add(SetSongEvent(state.queue[prevIndex]));
+  }
+
+  Future<void> _onToggleShuffleMode(
+    ToggleShuffleModeEvent event,
+    Emitter<PlayerState> emit,
+  ) async {
+    final isShuffleMode = !state.isShuffleMode;
+    final List<Song> queue;
+    int currentIndex;
+    if (isShuffleMode) {
+      if (state.queue.isEmpty) return;
+      //Logic to shuffle the queue without changing the current song
+      queue = List.from(state.originalQueue);
+      queue.removeAt(state.currentIndex);
+      queue.shuffle();
+      queue.insert(0, state.currentSong!);
+      currentIndex = 0;
+    } else {
+      queue = List.from(state.originalQueue);
+      //find the index of the current song
+      currentIndex = queue.indexOf(state.currentSong!);
+    }
+
+    emit(
+      state.copyWith(
+        isShuffleMode: isShuffleMode,
+        queue: queue,
+        currentIndex: currentIndex,
+      ),
+    );
+  }
+
+  Future<void> _onToggleRepeatMode(
+    ToggleRepeatModeEvent event,
+    Emitter<PlayerState> emit,
+  ) async {
+    emit(state.copyWith(isRepeatMode: !state.isRepeatMode));
   }
 
   @override

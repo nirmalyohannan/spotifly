@@ -64,3 +64,7 @@ class PlayNextEvent extends PlayerEvent {}
 class PlayPreviousEvent extends PlayerEvent {}
 
 class PlayerCompleteEvent extends PlayerEvent {}
+
+class ToggleShuffleModeEvent extends PlayerEvent {}
+
+class ToggleRepeatModeEvent extends PlayerEvent {}

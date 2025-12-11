@@ -17,8 +17,10 @@ class PlayerControls extends StatelessWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.shuffle),
-              color: Colors.green,
-              onPressed: () {},
+              color: state.isShuffleMode ? Colors.green : Colors.white,
+              onPressed: () {
+                context.read<PlayerBloc>().add(ToggleShuffleModeEvent());
+              },
             ), // Shuffle on
             IconButton(
               icon: const Icon(Icons.skip_previous, size: 36),
@@ -41,8 +43,10 @@ class PlayerControls extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.repeat),
-              color: Colors.green,
-              onPressed: () {},
+              color: state.isRepeatMode ? Colors.green : Colors.white,
+              onPressed: () {
+                context.read<PlayerBloc>().add(ToggleRepeatModeEvent());
+              },
             ), // Repeat one
           ],
         );
