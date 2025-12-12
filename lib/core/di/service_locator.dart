@@ -34,17 +34,6 @@ Future<void> setupServiceLocator() async {
     () => SpotifyApiClient(getIt<SpotifyAuthService>()),
   );
 
-  // Player Feature
-  final audioHandler = await AudioService.init(
-    builder: () => AudioPlayerHandler(),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.spotifly.channel.audio',
-      androidNotificationChannelName: 'SpotiFly Audio',
-      androidNotificationOngoing: true,
-    ),
-  );
-  getIt.registerSingleton<AudioHandler>(audioHandler);
-
   getIt.registerLazySingleton<YoutubeExplode>(() => YoutubeExplode());
   getIt.registerLazySingleton<YoutubeRemoteDataSource>(
     () => YoutubeRemoteDataSourceImpl(getIt<YoutubeExplode>()),
@@ -93,6 +82,20 @@ Future<void> setupServiceLocator() async {
 
   // Home Feature
   getIt.registerLazySingleton<HomeRepository>(() => HomeRepositoryImpl());
+
+  // Player Feature - AudioHandler (Must be registered after Repositories, required for Android Auto)
+  final audioHandler = await AudioService.init(
+    builder: () => AudioPlayerHandler(
+      getIt<HomeRepository>(),
+      getIt<PlaylistRepository>(),
+    ),
+    config: const AudioServiceConfig(
+      androidNotificationChannelId: 'com.spotifly.channel.audio',
+      androidNotificationChannelName: 'SpotiFly Audio',
+      androidNotificationOngoing: true,
+    ),
+  );
+  getIt.registerSingleton<AudioHandler>(audioHandler);
 
   // Settings Feature
   getIt.registerLazySingleton<SettingsRepository>(
