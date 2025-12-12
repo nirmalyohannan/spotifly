@@ -6,12 +6,14 @@ import 'package:audio_session/audio_session.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:spotifly/core/youtube_user_agent.dart';
 import 'package:spotifly/features/home/domain/repositories/home_repository.dart';
+import 'package:spotifly/shared/domain/entities/song.dart';
 import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
 
 class AudioPlayerHandler extends BaseAudioHandler {
   final _player = AudioPlayer(userAgent: YoutubeUserAgent.userAgent);
   final HomeRepository _homeRepository;
   final PlaylistRepository _playlistRepository;
+  final _songCache = <String, Song>{};
 
   AudioPlayerHandler(this._homeRepository, this._playlistRepository) {
     _init();
@@ -104,6 +106,28 @@ class AudioPlayerHandler extends BaseAudioHandler {
     }
   }
 
+  @override
+  Future<void> playFromMediaId(
+    String mediaId, [
+    Map<String, dynamic>? extras,
+  ]) async {
+    log("playFromMediaId: $mediaId");
+    final song = _songCache[mediaId];
+    if (song != null) {
+      final mediaItem = MediaItem(
+        id: song.id,
+        title: song.title,
+        artist: song.artist,
+        artUri: Uri.parse(song.coverUrl),
+        extras: {'url': song.assetUrl},
+        playable: true,
+      );
+      await playMediaItem(mediaItem);
+    } else {
+      log("Song not found in cache: $mediaId");
+    }
+  }
+
   Future<MediaItem?> getItem(String mediaId) async {
     // For now, we mainly use this for playable items or simple retrieval.
     // In a real app, you'd likely fetch from a repo based on ID.
@@ -145,6 +169,9 @@ class AudioPlayerHandler extends BaseAudioHandler {
           ];
         case 'recent':
           final songs = await _homeRepository.getRecentlyPlayed();
+          for (var song in songs) {
+            _songCache[song.id] = song;
+          }
           return songs
               .map(
                 (song) => MediaItem(
@@ -171,6 +198,9 @@ class AudioPlayerHandler extends BaseAudioHandler {
               .toList();
         case 'liked':
           final songs = await _playlistRepository.likedSongsStream.first;
+          for (var song in songs) {
+            _songCache[song.id] = song;
+          }
           return songs
               .map(
                 (song) => MediaItem(
@@ -189,6 +219,9 @@ class AudioPlayerHandler extends BaseAudioHandler {
             parentMediaId,
           );
           if (playlist != null) {
+            for (var song in playlist.songs) {
+              _songCache[song.id] = song;
+            }
             return playlist.songs
                 .map(
                   (song) => MediaItem(
