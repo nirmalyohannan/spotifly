@@ -314,6 +314,8 @@ class AudioPlayerHandler extends BaseAudioHandler {
         title: song.title,
         artist: song.artist,
         artUri: Uri.parse(song.coverUrl),
+        duration: song.duration,
+        album: song.album,
         playable: true,
       );
       await setQueue([mediaItem]);
@@ -409,6 +411,8 @@ class AudioPlayerHandler extends BaseAudioHandler {
                     title: song.title,
                     artist: song.artist,
                     artUri: Uri.parse(song.coverUrl),
+                    duration: song.duration,
+                    album: song.album,
                     playable: true,
                   ),
                 )
