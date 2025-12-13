@@ -15,11 +15,13 @@ class PlaylistLoaded extends PlaylistState {
   final List<Playlist> playlists;
   final String? userProfileImage;
   final int likedSongsCount;
+  final bool isLoading;
 
   const PlaylistLoaded(
     this.playlists, {
     this.userProfileImage,
     this.likedSongsCount = 0,
+    this.isLoading = false,
   });
 
   @override
@@ -27,6 +29,7 @@ class PlaylistLoaded extends PlaylistState {
     playlists,
     userProfileImage ?? '',
     likedSongsCount,
+    isLoading,
   ];
 }
 

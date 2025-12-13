@@ -5,6 +5,8 @@ abstract class PlaylistRepository {
   Future<int> getLikedSongsCount();
 
   Future<List<Playlist>> getPlaylists();
+  Future<List<Playlist>> getCachedPlaylists();
+  Future<List<Playlist>> refreshPlaylists();
   Future<Playlist?> getPlaylistById(String id);
 
   Future<String?> getUserProfileImage();

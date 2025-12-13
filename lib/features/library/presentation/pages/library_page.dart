@@ -149,42 +149,64 @@ class LibraryAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: AppColors.background,
-      leading: GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SettingsPage()),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: FutureBuilder<String?>(
-            future: getIt<PlaylistRepository>().getUserProfileImage(),
-            builder: (context, snapshot) {
-              final imageUrl = snapshot.data;
-              return CircleAvatar(
-                backgroundColor: Colors.grey[800],
-                backgroundImage: imageUrl != null
-                    ? NetworkImage(imageUrl)
-                    : null,
-                child: imageUrl == null
-                    ? const Icon(Icons.person, color: Colors.white)
-                    : null,
+    return BlocBuilder<PlaylistBloc, PlaylistState>(
+      builder: (context, state) {
+        String? userProfileImage;
+        bool isLoading = false;
+
+        if (state is PlaylistLoaded) {
+          userProfileImage = state.userProfileImage;
+          isLoading = state.isLoading;
+        }
+
+        return AppBar(
+          backgroundColor: AppColors.background,
+          leading: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
               );
             },
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CircleAvatar(
+                backgroundColor: Colors.grey[800],
+                backgroundImage: userProfileImage != null
+                    ? NetworkImage(userProfileImage)
+                    : null,
+                child: userProfileImage == null
+                    ? const Icon(Icons.person, color: Colors.white)
+                    : null,
+              ),
+            ),
           ),
-        ),
-      ),
-      title: const Text(
-        'Your Library',
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-      ),
-      actions: [
-        IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-        IconButton(icon: const Icon(Icons.add), onPressed: () {}),
-      ],
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Your Library',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+              ),
+              if (isLoading) ...[
+                const SizedBox(width: 12),
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+            IconButton(icon: const Icon(Icons.add), onPressed: () {}),
+          ],
+        );
+      },
     );
   }
 }

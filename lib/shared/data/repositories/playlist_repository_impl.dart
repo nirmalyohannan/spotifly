@@ -298,8 +298,10 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   }
 
   @override
-  Future<List<Playlist>> getPlaylists() async {
-    // 1. Fetch local playlists first
+  Future<List<Playlist>> getCachedPlaylists() async {
+    if (_cachedPlaylists != null && _cachedPlaylists!.isNotEmpty) {
+      return _cachedPlaylists!;
+    }
     try {
       log('Fetching local playlists...');
       final localPlaylists = await _localDataSource.getUserPlaylists();
@@ -307,14 +309,18 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       if (localPlaylists.isNotEmpty) {
         _cachedPlaylists = localPlaylists;
       }
+      return localPlaylists;
     } catch (e) {
       log('Error fetching local playlists: $e');
-      // Continue to fetch remote
+      return [];
     }
+  }
 
+  @override
+  Future<List<Playlist>> refreshPlaylists() async {
     try {
       log('Fetching remote playlists...');
-      // 2. Fetch remote playlists (Paginated)
+      // Fetch remote playlists (Paginated)
       List<Playlist> allRemotePlaylists = [];
       int offset = 0;
       const limit = 50;
@@ -352,7 +358,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
       log('Total remote playlists: ${allRemotePlaylists.length}');
 
-      // 3. Update Cache & Local Storage
+      // Update Cache & Local Storage
       _cachedPlaylists = allRemotePlaylists;
       await _localDataSource.cacheUserPlaylists(allRemotePlaylists);
       log('Cached user playlists to Hive');
@@ -361,11 +367,25 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     } catch (e, stack) {
       log('Error fetching playlists: $e');
       log('Stack trace: $stack');
+      // If we differ from original logic which just rethrew if cache empty:
+      // We should probably rethrow here so the caller knows refresh failed?
+      // Or return cached if available?
+      // The original getPlaylists rethrows if cache is empty.
+      // Let's stick to that pattern for refreshPlaylists.
       if (_cachedPlaylists == null || _cachedPlaylists!.isEmpty) {
         rethrow;
       }
       return _cachedPlaylists!;
     }
+  }
+
+  @override
+  Future<List<Playlist>> getPlaylists() async {
+    // Legacy support: try to get local first (implicit in refresh logic fallback? no).
+    // Original logic: Try local, then try remote.
+    // We can call getCachedPlaylists just to populate `_cachedPlaylists` in case `refreshPlaylists` fails and needs it for fallback.
+    await getCachedPlaylists();
+    return refreshPlaylists();
   }
 
   @override
