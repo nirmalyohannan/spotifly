@@ -33,6 +33,10 @@ class AudioPlayerHandler extends BaseAudioHandler {
 
   // Cache for Android Auto browsing
   final _songCache = <String, Song>{};
+  //This will be used to store the last browsed media items
+  //So when a song is tapped in Android Auto, the remaining songs can be set in Queue from this list
+  //Without this, the queue will be empty when a song is tapped in Android Auto
+  List<MediaItem> _lastBrowsedMediaItems = [];
 
   AudioPlayerHandler(
     this._homeRepository,
@@ -328,6 +332,15 @@ class AudioPlayerHandler extends BaseAudioHandler {
       return;
     }
 
+    // Check if it's in the last browsed list (e.g. user clicked a song in Android Auto list)
+    final browseIndex = _lastBrowsedMediaItems.indexWhere(
+      (item) => item.id == mediaId,
+    );
+    if (browseIndex != -1) {
+      await setQueue(_lastBrowsedMediaItems, initialIndex: browseIndex);
+      return;
+    }
+
     final song = _songCache[mediaId];
     if (song != null) {
       final mediaItem = MediaItem(
@@ -372,7 +385,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
           for (var song in songs) {
             _songCache[song.id] = song;
           }
-          return songs
+          final items = songs
               .map(
                 (song) => MediaItem(
                   id: song.id,
@@ -384,6 +397,8 @@ class AudioPlayerHandler extends BaseAudioHandler {
                 ),
               )
               .toList();
+          _lastBrowsedMediaItems = items;
+          return items;
         case 'playlists':
           final playlists = await _playlistRepository.getPlaylists();
           return playlists
@@ -401,7 +416,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
           for (var song in songs) {
             _songCache[song.id] = song;
           }
-          return songs
+          final items = songs
               .map(
                 (song) => MediaItem(
                   id: song.id,
@@ -413,6 +428,8 @@ class AudioPlayerHandler extends BaseAudioHandler {
                 ),
               )
               .toList();
+          _lastBrowsedMediaItems = items;
+          return items;
         default:
           // id was concatenated with space in getChildren Playlist Switch Case
           final ids = parentMediaId.split(" ");
@@ -427,7 +444,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
             for (var song in playlist.songs) {
               _songCache[song.id] = song;
             }
-            return playlist.songs
+            final items = playlist.songs
                 .map(
                   (song) => MediaItem(
                     id: song.id,
@@ -440,6 +457,8 @@ class AudioPlayerHandler extends BaseAudioHandler {
                   ),
                 )
                 .toList();
+            _lastBrowsedMediaItems = items;
+            return items;
           }
           return [];
       }
