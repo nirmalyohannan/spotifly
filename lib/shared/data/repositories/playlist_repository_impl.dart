@@ -396,6 +396,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   @override
   Future<List<Playlist>> getPlaylists() async {
+    //! Review this logic
     // Legacy support: try to get local first (implicit in refresh logic fallback? no).
     // Original logic: Try local, then try remote.
     // We can call getCachedPlaylists just to populate `_cachedPlaylists` in case `refreshPlaylists` fails and needs it for fallback.

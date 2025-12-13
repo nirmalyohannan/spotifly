@@ -365,7 +365,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
           return playlists
               .map(
                 (playlist) => MediaItem(
-                  id: playlist.id,
+                  id: "${playlist.id} ${playlist.snapshotId}", //both seperated by space
                   title: playlist.title,
                   artUri: Uri.tryParse(playlist.coverUrl),
                   playable: false,
@@ -389,9 +389,14 @@ class AudioPlayerHandler extends BaseAudioHandler {
               )
               .toList();
         default:
+          // id was concatenated with space in getChildren Playlist Switch Case
+          final ids = parentMediaId.split(" ");
+          final playlistId = ids[0];
+          final playlistSnapshotId = ids.length > 1 ? ids[1] : null;
+
           final playlist = await _playlistRepository.getPlaylistById(
-            parentMediaId,
-            null,
+            playlistId,
+            playlistSnapshotId,
           );
           if (playlist != null) {
             for (var song in playlist.songs) {
