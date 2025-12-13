@@ -232,6 +232,15 @@ class AudioPlayerHandler extends BaseAudioHandler {
     playbackState.add(
       playbackState.value.copyWith(
         processingState: AudioProcessingState.loading,
+        playing: false,
+        updatePosition: Duration.zero,
+        bufferedPosition: Duration.zero,
+        speed: 1.0,
+        queueIndex: _currentIndex,
+        shuffleMode: _isShuffleMode
+            ? AudioServiceShuffleMode.all
+            : AudioServiceShuffleMode.none,
+        repeatMode: _repeatMode,
       ),
     );
 
