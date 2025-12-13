@@ -30,6 +30,26 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   Stream<List<Song>> get likedSongsStream => _likedSongsController.stream;
 
   @override
+  Future<List<Song>> getLikedSongs() async {
+    try {
+      // Try local first
+      final localSongs = await _localDataSource.getLikedSongs();
+      if (localSongs.isNotEmpty) {
+        return localSongs;
+      }
+
+      // If empty, trigger a refresh (this will fetch from remote and update cache)
+      await getLikedSongsCount();
+
+      // Return updated local
+      return await _localDataSource.getLikedSongs();
+    } catch (e) {
+      log('Error getting liked songs: $e');
+      return [];
+    }
+  }
+
+  @override
   void clearCache() {
     _cachedUserProfileImage = null;
     _cachedPlaylists = null;

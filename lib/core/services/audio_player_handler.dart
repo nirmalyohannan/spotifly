@@ -316,7 +316,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
               )
               .toList();
         case 'liked':
-          final songs = await _playlistRepository.likedSongsStream.first;
+          final songs = await _playlistRepository.getLikedSongs();
           for (var song in songs) {
             _songCache[song.id] = song;
           }

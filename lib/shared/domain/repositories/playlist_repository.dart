@@ -15,6 +15,8 @@ abstract class PlaylistRepository {
   Future<void> removeSongFromLiked(String songId);
   Future<bool> isSongLiked(String songId);
 
+  Future<List<Song>> getLikedSongs();
+
   Stream<List<Song>> get likedSongsStream;
   void clearCache();
 }
