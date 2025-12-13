@@ -232,6 +232,13 @@ class AudioPlayerHandler extends BaseAudioHandler {
 
   @override
   Future<void> playMediaItem(MediaItem mediaItem) async {
+    //Pause the playback if it is playing anything
+    //Else, previous song will be played until the current song is loaded
+    //Making it look like bug
+    if (_player.playing) {
+      await pause();
+    }
+
     this.mediaItem.add(mediaItem);
     playbackState.add(
       playbackState.value.copyWith(
