@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:spotifly/features/library/domain/use_cases/get_playlist_by_id.dart';
 import 'package:spotifly/shared/data/data_sources/playlist_local_data_source.dart';
 import 'package:spotifly/shared/data/data_sources/playlist_remote_data_source.dart';
 import 'package:spotifly/core/network/spotify_api_client.dart';
@@ -89,6 +90,9 @@ Future<void> setupServiceLocator() async {
   );
   getIt.registerLazySingleton<SyncLibrary>(
     () => SyncLibrary(getIt<PlaylistRepository>()),
+  );
+  getIt.registerLazySingleton<GetPlaylistById>(
+    () => GetPlaylistById(getIt<PlaylistRepository>()),
   );
   getIt.registerFactory<LikedSongsBloc>(
     () => LikedSongsBloc(

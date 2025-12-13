@@ -5,8 +5,8 @@ import 'package:spotifly/core/assets.dart';
 import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/theme/app_colors.dart';
 import 'package:spotifly/core/utils/flight_shuttle_builder.dart';
+import 'package:spotifly/features/library/domain/use_cases/get_playlist_by_id.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
-import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
 import '../../../../shared/domain/entities/playlist.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
@@ -28,9 +28,7 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
   @override
   void initState() {
     super.initState();
-    _playlistFuture = getIt<PlaylistRepository>().getPlaylistById(
-      widget.playlist.id,
-    );
+    _playlistFuture = getIt<GetPlaylistById>().call(widget.playlist.id);
   }
 
   @override
