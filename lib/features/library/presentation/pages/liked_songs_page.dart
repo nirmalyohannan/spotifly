@@ -32,80 +32,83 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
+      body: Scrollbar(
         controller: _scrollController,
-        slivers: [
-          const SliverAppBar(
-            expandedHeight: 250.0,
-            floating: false,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text('Liked Songs'),
-              background: _LikedSongsHeaderBackground(),
+        child: CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            const SliverAppBar(
+              expandedHeight: 250.0,
+              floating: false,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text('Liked Songs'),
+                background: _LikedSongsHeaderBackground(),
+              ),
             ),
-          ),
-          BlocBuilder<LikedSongsBloc, LikedSongsState>(
-            builder: (context, state) {
-              if ((state.status == LikedSongsStatus.initial ||
-                      state.status == LikedSongsStatus.loading) &&
-                  state.songs.isEmpty) {
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => LikedSongsShimmerItem(index: index),
-                    childCount: 15,
-                  ),
-                );
-              }
-
-              if (state.status == LikedSongsStatus.failure &&
-                  state.songs.isEmpty) {
-                return SliverToBoxAdapter(
-                  child: Center(child: Text('Error: ${state.errorMessage}')),
-                );
-              }
-
-              return SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  // Use shimmers for items not yet in the list but within totalCount
-                  if (index >= state.songs.length) {
-                    return LikedSongsShimmerItem(index: index);
-                  }
-
-                  final song = state.songs[index];
-
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 600),
-                    child: song == null
-                        ? LikedSongsShimmerItem(index: index)
-                        : LikedSongsListItem(
-                            song: song,
-                            onTap: () {
-                              // Filter out nulls to get the actual list of songs to play
-                              final validSongs = state.songs
-                                  .where((s) => s != null)
-                                  .cast<Song>()
-                                  .toList();
-
-                              // Find the correct index in the valid list
-                              final initialIndex = validSongs.indexOf(song);
-
-                              if (initialIndex != -1) {
-                                context.read<PlayerBloc>().add(
-                                  SetPlaylistEvent(
-                                    songs: validSongs,
-                                    initialIndex: initialIndex,
-                                  ),
-                                );
-                              }
-                            },
-                          ),
+            BlocBuilder<LikedSongsBloc, LikedSongsState>(
+              builder: (context, state) {
+                if ((state.status == LikedSongsStatus.initial ||
+                        state.status == LikedSongsStatus.loading) &&
+                    state.songs.isEmpty) {
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => LikedSongsShimmerItem(index: index),
+                      childCount: 15,
+                    ),
                   );
-                }, childCount: state.totalCount),
-              );
-            },
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 80)),
-        ],
+                }
+
+                if (state.status == LikedSongsStatus.failure &&
+                    state.songs.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: Center(child: Text('Error: ${state.errorMessage}')),
+                  );
+                }
+
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    // Use shimmers for items not yet in the list but within totalCount
+                    if (index >= state.songs.length) {
+                      return LikedSongsShimmerItem(index: index);
+                    }
+
+                    final song = state.songs[index];
+
+                    return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 600),
+                      child: song == null
+                          ? LikedSongsShimmerItem(index: index)
+                          : LikedSongsListItem(
+                              song: song,
+                              onTap: () {
+                                // Filter out nulls to get the actual list of songs to play
+                                final validSongs = state.songs
+                                    .where((s) => s != null)
+                                    .cast<Song>()
+                                    .toList();
+
+                                // Find the correct index in the valid list
+                                final initialIndex = validSongs.indexOf(song);
+
+                                if (initialIndex != -1) {
+                                  context.read<PlayerBloc>().add(
+                                    SetPlaylistEvent(
+                                      songs: validSongs,
+                                      initialIndex: initialIndex,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                    );
+                  }, childCount: state.totalCount),
+                );
+              },
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          ],
+        ),
       ),
     );
   }
