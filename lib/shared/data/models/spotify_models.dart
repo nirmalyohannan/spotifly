@@ -19,11 +19,7 @@ class SpotifyUser {
       images: json['images'] is List
           ? (json['images'] as List)
                 .whereType<Map>()
-                .map(
-                  (e) => SpotifyImage.fromJson(
-                    Map<String, dynamic>.from(e as Map),
-                  ),
-                )
+                .map((e) => SpotifyImage.fromJson(Map<String, dynamic>.from(e)))
                 .toList()
           : [],
     );
@@ -77,11 +73,7 @@ class SpotifyPlaylist {
       images: json['images'] is List
           ? (json['images'] as List)
                 .whereType<Map>()
-                .map(
-                  (e) => SpotifyImage.fromJson(
-                    Map<String, dynamic>.from(e as Map),
-                  ),
-                )
+                .map((e) => SpotifyImage.fromJson(Map<String, dynamic>.from(e)))
                 .toList()
           : [],
       owner: json['owner'] is Map
@@ -122,9 +114,7 @@ class SpotifyTrack {
           ? (json['artists'] as List)
                 .whereType<Map>()
                 .map(
-                  (e) => SpotifyArtist.fromJson(
-                    Map<String, dynamic>.from(e as Map),
-                  ),
+                  (e) => SpotifyArtist.fromJson(Map<String, dynamic>.from(e)),
                 )
                 .toList()
           : [],
@@ -156,11 +146,7 @@ class SpotifyArtist {
       images: json['images'] is List
           ? (json['images'] as List)
                 .whereType<Map>()
-                .map(
-                  (e) => SpotifyImage.fromJson(
-                    Map<String, dynamic>.from(e as Map),
-                  ),
-                )
+                .map((e) => SpotifyImage.fromJson(Map<String, dynamic>.from(e)))
                 .toList()
           : null,
     );
@@ -187,11 +173,7 @@ class SpotifyAlbum {
       images: json['images'] is List
           ? (json['images'] as List)
                 .whereType<Map>()
-                .map(
-                  (e) => SpotifyImage.fromJson(
-                    Map<String, dynamic>.from(e as Map),
-                  ),
-                )
+                .map((e) => SpotifyImage.fromJson(Map<String, dynamic>.from(e)))
                 .toList()
           : [],
       releaseDate: json['release_date']?.toString(),

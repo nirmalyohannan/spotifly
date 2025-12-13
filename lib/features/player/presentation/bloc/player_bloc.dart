@@ -171,7 +171,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
     // Access specific streams from our handler implementation
     if (_audioHandler is AudioPlayerHandler) {
-      final handler = _audioHandler as AudioPlayerHandler;
+      final handler = _audioHandler;
       handler.positionStream.listen((position) {
         add(UpdatePositionEvent(position));
       });
