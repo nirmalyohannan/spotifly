@@ -19,4 +19,6 @@ abstract class PlaylistRepository {
 
   Stream<List<Song>> get likedSongsStream;
   void clearCache();
+
+  Future<void> syncLibrary();
 }

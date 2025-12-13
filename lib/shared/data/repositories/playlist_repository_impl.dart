@@ -20,6 +20,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   List<Playlist>? _cachedPlaylists;
 
   bool _isLikedSongsRefreshing = false;
+  bool _isLibrarySyncing = false;
 
   final _likedSongsController = StreamController<List<Song>>.broadcast();
 
@@ -63,6 +64,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     // Or just clear memory state variables.
     // For now, let's keep it simple.
     _isLikedSongsRefreshing = false;
+    _isLibrarySyncing = false;
   }
 
   @override
@@ -162,7 +164,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     List<Song> currentSongs = await _localDataSource.getLikedSongs();
 
     while (offset < total) {
-      await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 1));
 
       try {
         final remoteData = await _remoteDataSource.getLikedSongs(
@@ -347,6 +349,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       bool hasMore = true;
 
       while (hasMore) {
+        await Future.delayed(const Duration(milliseconds: 600));
         log('Fetching remote playlists offset: $offset');
         final spotifyPlaylists = await _remoteDataSource.getUserPlaylists(
           offset: offset,
@@ -479,6 +482,30 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     } catch (e) {
       log('Error checking if song is liked: $e');
       return false;
+    }
+  }
+
+  @override
+  Future<void> syncLibrary() async {
+    if (_isLibrarySyncing) return;
+    _isLibrarySyncing = true;
+    // Only start if not already refreshing?
+    // We don't have a global _isLibrarySyncing flag, but this is usually called once on startup.
+    // Let's fire and forget.
+    _syncPlaylistsAndSongs();
+  }
+
+  Future<void> _syncPlaylistsAndSongs() async {
+    log('Syncing library...');
+    try {
+      var playlists = await refreshPlaylists();
+      for (var playlist in playlists) {
+        await Future.delayed(const Duration(milliseconds: 600));
+        await getPlaylistById(playlist.id);
+      }
+      log('Library sync: Completed.');
+    } catch (e) {
+      log('Error syncing library: $e');
     }
   }
 }

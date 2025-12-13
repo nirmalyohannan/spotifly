@@ -13,6 +13,7 @@ import 'package:spotifly/features/player/domain/usecases/remove_song_from_liked.
 import 'package:spotifly/features/player/domain/usecases/is_song_liked.dart';
 import 'package:spotifly/core/theme/app_theme.dart';
 import 'package:spotifly/features/shell/presentation/pages/main_shell.dart';
+import 'package:spotifly/features/library/domain/use_cases/sync_library.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +25,10 @@ void main() async {
 
   final authService = getIt<SpotifyAuthService>();
   final token = await authService.getAccessToken();
+
+  if (token != null) {
+    getIt<SyncLibrary>().call();
+  }
 
   runApp(
     BlocProvider(
