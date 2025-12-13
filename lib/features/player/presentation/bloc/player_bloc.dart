@@ -5,7 +5,6 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/core/services/audio_player_handler.dart';
 import 'package:spotifly/features/player/domain/usecases/add_song_to_liked.dart';
-import 'package:spotifly/features/player/domain/usecases/get_audio_stream.dart';
 import 'package:spotifly/features/player/domain/usecases/is_song_liked.dart';
 import 'package:spotifly/features/player/domain/usecases/remove_song_from_liked.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
@@ -14,19 +13,16 @@ import 'package:spotifly/shared/domain/entities/song.dart';
 
 class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   final AudioHandler _audioHandler;
-  final GetAudioStream _getAudioStream;
   final AddSongToLiked _addSongToLiked;
   final RemoveSongFromLiked _removeSongFromLiked;
   final IsSongLiked _isSongLiked;
 
   PlayerBloc({
     required AudioHandler audioHandler,
-    required GetAudioStream getAudioStream,
     required AddSongToLiked addSongToLiked,
     required RemoveSongFromLiked removeSongFromLiked,
     required IsSongLiked isSongLiked,
   }) : _audioHandler = audioHandler,
-       _getAudioStream = getAudioStream,
        _addSongToLiked = addSongToLiked,
        _removeSongFromLiked = removeSongFromLiked,
        _isSongLiked = isSongLiked,
@@ -37,10 +33,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     on<PauseEvent>((event, emit) => _audioHandler.pause());
     on<TogglePlayEvent>(_onTogglePlayEvent);
     on<CheckLikedStatus>(_onCheckLikedStatus);
-
     on<ToggleLikeStatus>(_onToggleLikeStatus);
-
-    on<SetSongEvent>(_onSetSongEvent);
 
     on<SeekEvent>((event, emit) => _audioHandler.seek(event.position));
 
@@ -54,14 +47,80 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       (event, emit) => emit(state.copyWith(isPlaying: event.isPlaying)),
     );
 
-    // Playlist Events
+    on<UpdateQueueEvent>((event, emit) {
+      emit(state.copyWith(queue: event.queue));
+    });
+
+    on<UpdateCurrentSongEvent>((event, emit) {
+      emit(state.copyWith(currentSong: event.song));
+      add(CheckLikedStatus(event.song.id));
+    });
+
+    on<UpdateIndexEvent>((event, emit) {
+      emit(state.copyWith(currentIndex: event.index));
+    });
+
+    on<UpdateRepeatModeEvent>(
+      (event, emit) => emit(state.copyWith(repeatMode: event.mode)),
+    );
+    on<UpdateShuffleModeEvent>(
+      (event, emit) => emit(state.copyWith(isShuffleMode: event.isShuffleMode)),
+    );
+
     on<SetPlaylistEvent>(_onSetPlaylist);
-    on<PlayNextEvent>(_onPlayNext);
-    on<PlayPreviousEvent>(_onPlayPrevious);
-    on<PlayerCompleteEvent>((event, emit) => add(PlayNextEvent()));
+
+    on<PlayNextEvent>((event, emit) => _audioHandler.skipToNext());
+    on<PlayPreviousEvent>((event, emit) => _audioHandler.skipToPrevious());
+
+    on<SetSongEvent>((event, emit) async {
+      final mediaItem = _songToMediaItem(event.song);
+      await _audioHandler.playMediaItem(mediaItem);
+    });
 
     on<ToggleShuffleModeEvent>(_onToggleShuffleMode);
     on<ToggleRepeatModeEvent>(_onToggleRepeatMode);
+
+    on<PlayerCompleteEvent>((event, emit) {});
+  }
+
+  void _setupStreams() {
+    _audioHandler.playbackState.listen((playbackState) {
+      add(UpdateIsPlayingEvent(playbackState.playing));
+
+      if (playbackState.queueIndex != null) {
+        add(UpdateIndexEvent(playbackState.queueIndex!));
+      }
+
+      final repeatMode = _mapRepeatMode(playbackState.repeatMode);
+      add(UpdateRepeatModeEvent(repeatMode));
+
+      final isShuffle =
+          playbackState.shuffleMode == AudioServiceShuffleMode.all;
+      add(UpdateShuffleModeEvent(isShuffle));
+    });
+
+    _audioHandler.queue.listen((mediaItems) {
+      final songs = mediaItems.map(_mediaItemToSong).toList();
+      add(UpdateQueueEvent(songs));
+    });
+
+    _audioHandler.mediaItem.listen((mediaItem) {
+      if (mediaItem != null) {
+        add(UpdateCurrentSongEvent(_mediaItemToSong(mediaItem)));
+      }
+    });
+
+    if (_audioHandler is AudioPlayerHandler) {
+      final handler = _audioHandler;
+      handler.positionStream.listen((position) {
+        add(UpdatePositionEvent(position));
+      });
+      handler.durationStream.listen((duration) {
+        if (duration != null) {
+          add(UpdateDurationEvent(duration));
+        }
+      });
+    }
   }
 
   FutureOr<void> _onToggleLikeStatus(
@@ -111,209 +170,108 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     }
   }
 
-  FutureOr<void> _onSetSongEvent(
-    SetSongEvent event,
-    Emitter<PlayerState> emit,
-  ) async {
-    // Update metadata immediately
-    emit(
-      state.copyWith(
-        currentSong: event.song,
-        isPlaying: true, // Will update via stream, but optimistic update
-        isInitialBuffer: true,
-      ),
-    );
-    add(CheckLikedStatus(event.song.id));
-
-    try {
-      // Use the song metadata to find the audio stream
-      final audioUrl = await _getAudioStream(
-        event.song.title,
-        event.song.artist,
-      );
-
-      final mediaItem = MediaItem(
-        id: event.song.id,
-        title: event.song.title,
-        artist: event.song.artist,
-        album: event.song.album,
-        artUri: Uri.parse(event.song.coverUrl),
-        duration: event.song.duration,
-        extras: {'url': audioUrl},
-      );
-
-      await _audioHandler.playMediaItem(mediaItem);
-      emit(state.copyWith(isInitialBuffer: false));
-    } catch (e) {
-      // In a real app, we would handle errors properly
-      log("Error loading audio: $e");
-    }
-  }
-
-  void _setupStreams() {
-    _audioHandler.playbackState.listen((playbackState) {
-      add(UpdateIsPlayingEvent(playbackState.playing));
-      if (playbackState.processingState == AudioProcessingState.completed) {
-        add(PlayerCompleteEvent());
-      }
-    });
-
-    _audioHandler.customEvent.listen((event) {
-      switch (event) {
-        case 'skipToNext':
-          add(PlayNextEvent());
-          break;
-        case 'skipToPrevious':
-          add(PlayPreviousEvent());
-          break;
-      }
-    });
-
-    // Access specific streams from our handler implementation
-    if (_audioHandler is AudioPlayerHandler) {
-      final handler = _audioHandler;
-      handler.positionStream.listen((position) {
-        add(UpdatePositionEvent(position));
-      });
-      handler.durationStream.listen((duration) {
-        if (duration != null) {
-          add(UpdateDurationEvent(duration));
-        }
-      });
-    }
-  }
-
   Future<void> _onSetPlaylist(
     SetPlaylistEvent event,
     Emitter<PlayerState> emit,
   ) async {
-    final List<Song> originalQueue = List.from(event.songs);
-    List<Song> queue = List.from(event.songs);
-    int currentIndex = event.initialIndex;
+    if (_audioHandler is AudioPlayerHandler) {
+      final handler = _audioHandler;
+      final mediaItems = event.songs.map(_songToMediaItem).toList();
 
-    if (event.isShuffle) {
-      // shuffle logic:
-      // 1. Get the starting song
-      final startingSong = queue[currentIndex];
-      // 2. Remove it from the list to be shuffled
-      queue.removeAt(currentIndex);
-      // 3. Shuffle the rest
-      queue.shuffle();
-      // 4. Insert starting song at the beginning
-      queue.insert(0, startingSong);
-      // 5. Set current index to 0
-      currentIndex = 0;
-    }
-
-    emit(
-      state.copyWith(
-        originalQueue: originalQueue,
-        queue: queue,
-        currentIndex: currentIndex,
-        isShuffleMode: event.isShuffle,
-        isRepeatMode: false,
-      ),
-    );
-
-    if (queue.isNotEmpty) {
-      add(SetSongEvent(queue[currentIndex]));
-    }
-  }
-
-  Future<void> _onPlayNext(
-    PlayNextEvent event,
-    Emitter<PlayerState> emit,
-  ) async {
-    if (state.queue.isEmpty) return;
-
-    int nextIndex = state.currentIndex + 1;
-
-    // Handle end of playlist
-    if (nextIndex >= state.queue.length) {
-      if (state.isRepeatMode) {
-        nextIndex = 0;
+      if (event.isShuffle) {
+        await handler.setShuffleMode(AudioServiceShuffleMode.all);
       } else {
-        // Stop playing if not repeat mode
-        return;
+        await handler.setShuffleMode(AudioServiceShuffleMode.none);
       }
+
+      await handler.setQueue(mediaItems, initialIndex: event.initialIndex);
     }
-
-    emit(state.copyWith(currentIndex: nextIndex));
-    add(SetSongEvent(state.queue[nextIndex]));
-  }
-
-  Future<void> _onPlayPrevious(
-    PlayPreviousEvent event,
-    Emitter<PlayerState> emit,
-  ) async {
-    if (state.queue.isEmpty) return;
-
-    // If more than 3 seconds in, restart current song
-    if (state.position.inSeconds > 3) {
-      _audioHandler.seek(Duration.zero);
-      return;
-    }
-
-    int prevIndex = state.currentIndex - 1;
-
-    if (prevIndex < 0) {
-      if (state.isRepeatMode) {
-        prevIndex = state.queue.length - 1;
-      } else {
-        prevIndex = 0; // Stay at first song
-      }
-    }
-
-    emit(state.copyWith(currentIndex: prevIndex));
-    add(SetSongEvent(state.queue[prevIndex]));
   }
 
   Future<void> _onToggleShuffleMode(
     ToggleShuffleModeEvent event,
     Emitter<PlayerState> emit,
   ) async {
-    final isShuffleMode = !state.isShuffleMode;
-    final List<Song> queue;
-    int currentIndex;
-    if (isShuffleMode) {
-      if (state.queue.isEmpty) return;
-      //Logic to shuffle the queue without changing the current song
-      queue = List.from(state.originalQueue);
-      queue.removeAt(state.currentIndex);
-      queue.shuffle();
-      queue.insert(0, state.currentSong!);
-      currentIndex = 0;
-    } else {
-      queue = List.from(state.originalQueue);
-      //find the index of the current song
-      if (state.currentSong != null) {
-        currentIndex = queue.indexOf(state.currentSong!);
-        // If song not found (shouldn't happen), fallback to 0
-        if (currentIndex == -1) currentIndex = 0;
-      } else {
-        currentIndex = 0;
-      }
-    }
-
-    emit(
-      state.copyWith(
-        isShuffleMode: isShuffleMode,
-        queue: queue,
-        currentIndex: currentIndex,
-      ),
-    );
+    // Toggle logic
+    final newMode = !state.isShuffleMode;
+    final mode = newMode
+        ? AudioServiceShuffleMode.all
+        : AudioServiceShuffleMode.none;
+    await _audioHandler.setShuffleMode(mode);
   }
 
   Future<void> _onToggleRepeatMode(
     ToggleRepeatModeEvent event,
     Emitter<PlayerState> emit,
   ) async {
-    emit(state.copyWith(isRepeatMode: !state.isRepeatMode));
+    final current = state.repeatMode;
+    final next = _getNextRepeatMode(current);
+
+    AudioServiceRepeatMode mode;
+    switch (next) {
+      case PlayerRepeatMode.off:
+        mode = AudioServiceRepeatMode.none;
+        break;
+      case PlayerRepeatMode.all:
+        mode = AudioServiceRepeatMode.all;
+        break;
+      case PlayerRepeatMode.one:
+        mode = AudioServiceRepeatMode.one;
+        break;
+    }
+    await _audioHandler.setRepeatMode(mode);
+  }
+
+  PlayerRepeatMode _getNextRepeatMode(PlayerRepeatMode current) {
+    switch (current) {
+      case PlayerRepeatMode.off:
+        return PlayerRepeatMode.all;
+      case PlayerRepeatMode.all:
+        return PlayerRepeatMode.one;
+      case PlayerRepeatMode.one:
+        return PlayerRepeatMode.off;
+    }
+  }
+
+  PlayerRepeatMode _mapRepeatMode(AudioServiceRepeatMode mode) {
+    switch (mode) {
+      case AudioServiceRepeatMode.none:
+        return PlayerRepeatMode.off;
+      case AudioServiceRepeatMode.all:
+        return PlayerRepeatMode.all;
+      case AudioServiceRepeatMode.one:
+        return PlayerRepeatMode.one;
+      default:
+        return PlayerRepeatMode.off;
+    }
+  }
+
+  Song _mediaItemToSong(MediaItem item) {
+    return Song(
+      id: item.id,
+      title: item.title,
+      artist: item.artist ?? '',
+      album: item.album ?? '',
+      coverUrl: item.artUri?.toString() ?? '',
+      duration: item.duration ?? Duration.zero,
+      assetUrl: item.extras?['url'] ?? '',
+    );
+  }
+
+  MediaItem _songToMediaItem(Song song) {
+    return MediaItem(
+      id: song.id,
+      title: song.title,
+      artist: song.artist,
+      album: song.album,
+      artUri: Uri.tryParse(song.coverUrl),
+      duration: song.duration,
+      extras: {'url': song.assetUrl},
+    );
   }
 
   @override
   Future<void> close() {
-    // _audioHandler is singleton, do not dispose it here
     return super.close();
   }
 }

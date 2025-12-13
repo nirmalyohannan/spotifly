@@ -1,5 +1,6 @@
 import 'package:meta/meta.dart';
 import 'package:spotifly/shared/domain/entities/song.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
 
 @immutable
 abstract class PlayerEvent {}
@@ -68,3 +69,29 @@ class PlayerCompleteEvent extends PlayerEvent {}
 class ToggleShuffleModeEvent extends PlayerEvent {}
 
 class ToggleRepeatModeEvent extends PlayerEvent {}
+
+// Internal Events for syncing with AudioService
+class UpdateQueueEvent extends PlayerEvent {
+  final List<Song> queue;
+  UpdateQueueEvent(this.queue);
+}
+
+class UpdateCurrentSongEvent extends PlayerEvent {
+  final Song song;
+  UpdateCurrentSongEvent(this.song);
+}
+
+class UpdateIndexEvent extends PlayerEvent {
+    final int index;
+    UpdateIndexEvent(this.index);
+}
+
+class UpdateRepeatModeEvent extends PlayerEvent {
+    final PlayerRepeatMode mode;
+    UpdateRepeatModeEvent(this.mode);
+}
+
+class UpdateShuffleModeEvent extends PlayerEvent {
+    final bool isShuffleMode;
+    UpdateShuffleModeEvent(this.isShuffleMode);
+}

@@ -1,6 +1,8 @@
 import 'package:meta/meta.dart';
 import 'package:spotifly/shared/domain/entities/song.dart';
 
+enum PlayerRepeatMode { off, all, one }
+
 @immutable
 class PlayerState {
   final Song? currentSong;
@@ -13,7 +15,7 @@ class PlayerState {
   final List<Song> originalQueue;
   final int currentIndex;
   final bool isShuffleMode;
-  final bool isRepeatMode;
+  final PlayerRepeatMode repeatMode;
   final String? message;
 
   const PlayerState({
@@ -27,7 +29,7 @@ class PlayerState {
     this.originalQueue = const [],
     this.currentIndex = 0,
     this.isShuffleMode = false,
-    this.isRepeatMode = false,
+    this.repeatMode = PlayerRepeatMode.off,
     this.message,
   });
 
@@ -43,7 +45,7 @@ class PlayerState {
     List<Song>? originalQueue,
     int? currentIndex,
     bool? isShuffleMode,
-    bool? isRepeatMode,
+    PlayerRepeatMode? repeatMode,
   }) {
     return PlayerState(
       currentSong: currentSong ?? this.currentSong,
@@ -57,7 +59,7 @@ class PlayerState {
       originalQueue: originalQueue ?? this.originalQueue,
       currentIndex: currentIndex ?? this.currentIndex,
       isShuffleMode: isShuffleMode ?? this.isShuffleMode,
-      isRepeatMode: isRepeatMode ?? this.isRepeatMode,
+      repeatMode: repeatMode ?? this.repeatMode,
     );
   }
 }

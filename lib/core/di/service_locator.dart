@@ -88,6 +88,7 @@ Future<void> setupServiceLocator() async {
     builder: () => AudioPlayerHandler(
       getIt<HomeRepository>(),
       getIt<PlaylistRepository>(),
+      getIt<PlayerRepository>(),
     ),
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'com.spotifly.channel.audio',

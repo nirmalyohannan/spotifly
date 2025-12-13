@@ -42,8 +42,12 @@ class PlayerControls extends StatelessWidget {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.repeat),
-              color: state.isRepeatMode ? Colors.green : Colors.white,
+              icon: state.repeatMode == PlayerRepeatMode.one
+                  ? const Icon(Icons.repeat_one)
+                  : const Icon(Icons.repeat),
+              color: state.repeatMode == PlayerRepeatMode.off
+                  ? Colors.white
+                  : Colors.green,
               onPressed: () {
                 context.read<PlayerBloc>().add(ToggleRepeatModeEvent());
               },

@@ -7,7 +7,6 @@ import 'package:spotifly/core/di/service_locator.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:spotifly/core/services/spotify_auth_service.dart';
 import 'package:spotifly/features/auth/presentation/pages/login_page.dart';
-import 'package:spotifly/features/player/domain/usecases/get_audio_stream.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
 import 'package:spotifly/features/player/domain/usecases/add_song_to_liked.dart';
 import 'package:spotifly/features/player/domain/usecases/remove_song_from_liked.dart';
@@ -29,7 +28,6 @@ void main() async {
   runApp(
     BlocProvider(
       create: (context) => PlayerBloc(
-        getAudioStream: getIt<GetAudioStream>(),
         audioHandler: getIt<AudioHandler>(),
         addSongToLiked: getIt<AddSongToLiked>(),
         removeSongFromLiked: getIt<RemoveSongFromLiked>(),
