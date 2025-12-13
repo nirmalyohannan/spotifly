@@ -106,8 +106,9 @@ Future<void> setupServiceLocator() async {
     ),
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'com.spotifly.channel.audio',
-      androidNotificationChannelName: 'SpotiFly Audio',
+      androidNotificationChannelName: 'SpotiFly Music',
       androidNotificationOngoing: true,
+      androidNotificationIcon: 'drawable/ic_launcher_monochrome',
     ),
   );
   getIt.registerSingleton<AudioHandler>(audioHandler);
