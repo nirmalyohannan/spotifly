@@ -25,10 +25,20 @@ import 'package:spotifly/features/settings/presentation/bloc/settings_bloc.dart'
 import 'package:spotifly/features/library/domain/use_cases/get_liked_songs.dart';
 import 'package:spotifly/features/library/domain/use_cases/get_liked_songs_count.dart';
 import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_bloc.dart';
+import 'package:spotifly/features/player/data/repositories/audio_cache_repository_impl.dart';
+import 'package:spotifly/features/player/domain/repositories/audio_cache_repository.dart';
+import 'package:hive_ce/hive.dart';
+import 'package:spotifly/features/player/domain/entities/cache_source.dart';
+import 'package:spotifly/features/player/data/models/cached_song_metadata.dart';
+import 'package:spotifly/features/settings/domain/usecases/clear_audio_cache.dart';
 
 final getIt = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
+  // Initialize Hive Adapters for Caching
+  Hive.registerAdapter(CacheSourceAdapter());
+  Hive.registerAdapter(CachedSongMetadataAdapter());
+
   getIt.registerLazySingleton<SpotifyAuthService>(() => SpotifyAuthService());
   getIt.registerLazySingleton<SpotifyApiClient>(
     () => SpotifyApiClient(getIt<SpotifyAuthService>()),
@@ -40,6 +50,9 @@ Future<void> setupServiceLocator() async {
   );
   getIt.registerLazySingleton<PlayerRepository>(
     () => PlayerRepositoryImpl(getIt<YoutubeRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<AudioCacheRepository>(
+    () => AudioCacheRepositoryImpl(),
   );
   getIt.registerLazySingleton<GetAudioStream>(
     () => GetAudioStream(getIt<PlayerRepository>()),
@@ -89,6 +102,7 @@ Future<void> setupServiceLocator() async {
       getIt<HomeRepository>(),
       getIt<PlaylistRepository>(),
       getIt<PlayerRepository>(),
+      getIt<AudioCacheRepository>(),
     ),
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'com.spotifly.channel.audio',
@@ -112,10 +126,14 @@ Future<void> setupServiceLocator() async {
       homeRepository: getIt<HomeRepository>(),
     ),
   );
+  getIt.registerLazySingleton<ClearAudioCache>(
+    () => ClearAudioCache(getIt<AudioCacheRepository>()),
+  );
   getIt.registerFactory<SettingsBloc>(
     () => SettingsBloc(
       getUserProfile: getIt<GetUserProfile>(),
       logoutUser: getIt<LogoutUser>(),
+      clearAudioCache: getIt<ClearAudioCache>(),
     ),
   );
 }

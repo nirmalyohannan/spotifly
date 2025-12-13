@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/features/home/presentation/pages/home_page.dart';
 import 'package:spotifly/features/library/presentation/pages/library_page.dart';
@@ -29,35 +30,15 @@ class _MainShellState extends State<MainShell> {
       // Pop to first route if tapping the same tab
       _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
     } else {
-      setState(() {
-        _selectedIndex = index;
-      });
+      setState(() => _selectedIndex = index);
     }
-  }
-
-  Future<bool> _onWillPop() async {
-    final NavigatorState? currentNavigator =
-        _navigatorKeys[_selectedIndex].currentState;
-    if (currentNavigator != null && currentNavigator.canPop()) {
-      currentNavigator.pop();
-      return false;
-    }
-    // If on the first tab and cannot pop, let system handle back (exit app)
-    // If on other tabs, go back to first tab? Or just exit?
-    // Standard behavior often: back at root of non-home tab -> go to home tab.
-    if (_selectedIndex != 0) {
-      setState(() {
-        _selectedIndex = 0;
-      });
-      return false;
-    }
-    return true; // Let system handle exit
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop, // Todo: Migrate into PopScope
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: _onPopInvokedWithResult,
       child: Scaffold(
         body: Stack(
           children: [
@@ -146,5 +127,20 @@ class _MainShellState extends State<MainShell> {
         ),
       ),
     );
+  }
+
+  void _onPopInvokedWithResult(didPop, result) {
+    if (didPop) return;
+
+    final NavigatorState? currentNavigator =
+        _navigatorKeys[_selectedIndex].currentState;
+
+    if (currentNavigator != null && currentNavigator.canPop()) {
+      currentNavigator.pop();
+    } else if (_selectedIndex != 0) {
+      setState(() => _selectedIndex = 0);
+    } else {
+      SystemNavigator.pop();
+    }
   }
 }

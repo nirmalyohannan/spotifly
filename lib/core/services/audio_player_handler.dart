@@ -8,6 +8,12 @@ import 'package:spotifly/features/home/domain/repositories/home_repository.dart'
 import 'package:spotifly/features/player/domain/repositories/player_repository.dart';
 import 'package:spotifly/shared/domain/entities/song.dart';
 import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
+import 'package:spotifly/features/player/domain/repositories/audio_cache_repository.dart';
+import 'package:spotifly/features/player/data/datasources/caching_stream_audio_source.dart';
+import 'package:spotifly/features/player/domain/entities/cache_source.dart';
+import 'package:spotifly/features/player/data/models/cached_song_metadata.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class AudioPlayerHandler extends BaseAudioHandler {
   final AudioPlayer _player = AudioPlayer(
@@ -16,6 +22,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
   final HomeRepository _homeRepository;
   final PlaylistRepository _playlistRepository;
   final PlayerRepository _playerRepository;
+  final AudioCacheRepository _audioCacheRepository;
 
   // Internal queue management
   List<MediaItem> _queue = [];
@@ -31,6 +38,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
     this._homeRepository,
     this._playlistRepository,
     this._playerRepository,
+    this._audioCacheRepository,
   ) {
     _init();
   }
@@ -168,8 +176,8 @@ class AudioPlayerHandler extends BaseAudioHandler {
   }
 
   @override
-  Future<void> updateQueue(List<MediaItem> newQueue) async {
-    await setQueue(newQueue);
+  Future<void> updateQueue(List<MediaItem> queue) async {
+    await setQueue(queue);
   }
 
   Future<void> setQueue(
@@ -216,6 +224,26 @@ class AudioPlayerHandler extends BaseAudioHandler {
     );
 
     try {
+      // 1. Check Cache
+      final cachedMetadata = await _audioCacheRepository.getCachedSong(
+        mediaItem.id,
+      );
+      if (cachedMetadata != null) {
+        log("Cache Hit for ${mediaItem.title}: ${cachedMetadata.filePath}");
+        final file = File(cachedMetadata.filePath);
+        if (await file.exists()) {
+          // Play from file
+          await _player.setAudioSource(
+            AudioSource.file(cachedMetadata.filePath),
+          );
+          await _player.play();
+          return;
+        } else {
+          log("Cache file missing for ${mediaItem.title}");
+        }
+      }
+
+      // 2. Cache Miss - Fetch URL
       final url = await _playerRepository.getAudioStreamUrl(
         mediaItem.title,
         mediaItem.artist ?? "",
@@ -229,7 +257,36 @@ class AudioPlayerHandler extends BaseAudioHandler {
       final itemWithUrl = mediaItem.copyWith(extras: {'url': url});
       this.mediaItem.add(itemWithUrl);
 
-      await _player.setUrl(url);
+      // 3. Prepare Caching Path
+      final docsDir = await getApplicationDocumentsDirectory();
+      // Sanitize filename to avoid issues
+      final safeId = mediaItem.id.replaceAll(RegExp(r'[^\w\d]'), '_');
+      final cachePath = '${docsDir.path}/audioCache/youtube/$safeId.mp3';
+
+      // 4. Setup Source
+      final source = CachingStreamAudioSource(
+        uri: Uri.parse(url),
+        filePath: cachePath,
+        onDownloadComplete: (fileSize) async {
+          // Save metadata
+          final metadata = CachedSongMetadata(
+            id: mediaItem.id,
+            title: mediaItem.title,
+            artist: mediaItem.artist ?? 'Unknown',
+            album: mediaItem.album ?? 'Unknown',
+            coverUrl: mediaItem.artUri?.toString() ?? '',
+            durationMs: mediaItem.duration?.inMilliseconds ?? 0,
+            remoteUrl: url,
+            source: CacheSource.youtube,
+            filePath: cachePath,
+            lastPlayedAt: DateTime.now(),
+            fileSize: fileSize,
+          );
+          await _audioCacheRepository.saveCachedSong(metadata);
+        },
+      );
+
+      await _player.setAudioSource(source);
       await _player.play();
     } catch (e) {
       log("Error playing audio: $e");

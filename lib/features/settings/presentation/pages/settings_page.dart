@@ -25,6 +25,12 @@ class SettingsPage extends StatelessWidget {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message)));
+          } else if (state is CacheClearedSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Audio cache cleared successfully')),
+            );
+            // Reload profile to restore view
+            context.read<SettingsBloc>().add(LoadProfile());
           }
         },
         child: Scaffold(
@@ -102,6 +108,36 @@ class SettingsPage extends StatelessWidget {
                       _buildInfoTile(
                         'Subscription',
                         profile.product.toUpperCase(),
+                      ),
+
+                      const SizedBox(height: 24),
+                      // Storage Section / Clear Cache
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            // Show confirmation dialog? Or just clear.
+                            // For now, direct clear with snackbar feedback.
+                            context.read<SettingsBloc>().add(
+                              ClearCacheRequested(),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: const BorderSide(color: Colors.redAccent),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: const Text(
+                            'Clear Audio Cache',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                        ),
                       ),
 
                       const SizedBox(height: 48),

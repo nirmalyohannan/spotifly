@@ -17,3 +17,5 @@ class SettingsError extends SettingsState {
 }
 
 class LogoutSuccess extends SettingsState {}
+
+class CacheClearedSuccess extends SettingsState {}

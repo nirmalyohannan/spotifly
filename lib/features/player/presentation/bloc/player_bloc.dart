@@ -269,9 +269,4 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       extras: {'url': song.assetUrl},
     );
   }
-
-  @override
-  Future<void> close() {
-    return super.close();
-  }
 }
