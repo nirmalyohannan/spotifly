@@ -28,7 +28,10 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
   @override
   void initState() {
     super.initState();
-    _playlistFuture = getIt<GetPlaylistById>().call(widget.playlist.id);
+    _playlistFuture = getIt<GetPlaylistById>().call(
+      widget.playlist.id,
+      widget.playlist.snapshotId,
+    );
   }
 
   @override

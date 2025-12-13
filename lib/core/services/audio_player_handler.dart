@@ -391,6 +391,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
         default:
           final playlist = await _playlistRepository.getPlaylistById(
             parentMediaId,
+            null,
           );
           if (playlist != null) {
             for (var song in playlist.songs) {

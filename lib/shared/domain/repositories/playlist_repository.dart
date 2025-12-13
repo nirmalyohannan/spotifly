@@ -7,7 +7,11 @@ abstract class PlaylistRepository {
   Future<List<Playlist>> getPlaylists();
   Future<List<Playlist>> getCachedPlaylists();
   Future<List<Playlist>> refreshPlaylists();
-  Future<Playlist?> getPlaylistById(String id);
+
+  ///Playlist with full songs loaded
+  ///If snapshotId is provided, it will try to get from cache first if snapshotId matches
+  ///If snapshotId is not provided, it will try to get from remote
+  Future<Playlist?> getPlaylistById(String id, String? snapshotId);
 
   Future<String?> getUserProfileImage();
 

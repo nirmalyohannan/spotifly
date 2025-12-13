@@ -6,7 +6,7 @@ class GetPlaylistById {
 
   GetPlaylistById(this.playlistRepository);
 
-  Future<Playlist?> call(String id) {
-    return playlistRepository.getPlaylistById(id);
+  Future<Playlist?> call(String id, String snapshotId) {
+    return playlistRepository.getPlaylistById(id, snapshotId);
   }
 }
