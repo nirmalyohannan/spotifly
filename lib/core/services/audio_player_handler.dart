@@ -58,11 +58,22 @@ class AudioPlayerHandler extends BaseAudioHandler {
         _onPlaybackComplete();
       }
     });
+
+    // Listen to duration changes
+    _player.durationStream.listen((duration) {
+      final currentItem = mediaItem.value;
+      if (duration != null && currentItem != null) {
+        // Only update if duration has changed
+        if (currentItem.duration != duration) {
+          mediaItem.add(currentItem.copyWith(duration: duration));
+        }
+      }
+    });
   }
 
   void _broadcastState(PlaybackEvent event) {
     playbackState.add(
-      playbackState.value.copyWith(
+      PlaybackState(
         controls: [
           MediaControl.skipToPrevious,
           if (_player.playing) MediaControl.pause else MediaControl.play,
@@ -84,6 +95,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
             ? AudioServiceShuffleMode.all
             : AudioServiceShuffleMode.none,
         repeatMode: _repeatMode,
+        updateTime: DateTime.now(),
       ),
     );
   }
@@ -358,6 +370,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
                   title: song.title,
                   artist: song.artist,
                   artUri: Uri.parse(song.coverUrl),
+                  duration: song.duration,
                   playable: true,
                 ),
               )
@@ -386,6 +399,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
                   title: song.title,
                   artist: song.artist,
                   artUri: Uri.parse(song.coverUrl),
+                  duration: song.duration,
                   playable: true,
                 ),
               )
