@@ -26,6 +26,12 @@ class SpotifyMapper {
           ? playlist.images.first.url
           : 'https://via.placeholder.com/300',
       snapshotId: playlist.snapshotId,
+      owner: PlaylistOwner(
+        id: playlist.owner.id,
+        displayName: playlist.owner.displayName,
+        email: playlist.owner.email,
+        images: playlist.owner.images.map((i) => i.url).toList(),
+      ),
     );
   }
 }

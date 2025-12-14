@@ -360,7 +360,9 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   BehaviorSubject<List<Playlist>>? _syncPlaylistController;
 
   @override
-  Stream<List<Playlist>> loadPlaylistsWithSync() {
+  Stream<List<Playlist>> loadPlaylistsWithSync({
+    bool skipCachingPlaylistSongs = false,
+  }) {
     //If Stream is already open, return it avoiding multiple API Calls
     if (_syncPlaylistController != null && _syncPlaylistController!.isClosed) {
       return _syncPlaylistController!.stream;
@@ -369,15 +371,19 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     _syncPlaylistController = BehaviorSubject<List<Playlist>>();
 
     //Start the sync process
-    _startPlaylistSync().then((_) {
-      //Close the stream on completion
-      _syncPlaylistController!.close();
-    });
+    _startPlaylistSync(skipCachingPlaylistSongs: skipCachingPlaylistSongs).then(
+      (_) {
+        //Close the stream on completion
+        _syncPlaylistController!.close();
+      },
+    );
 
     return _syncPlaylistController!.stream;
   }
 
-  Future<void> _startPlaylistSync() async {
+  Future<void> _startPlaylistSync({
+    bool skipCachingPlaylistSongs = false,
+  }) async {
     try {
       Logger.i('_startPlaylistSync(): Started');
       //Fetch cached playlists and emit
@@ -388,27 +394,29 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       var remotePlaylists = (await _fetchAllRemotePlaylists()).toList();
       _syncPlaylistController!.add(remotePlaylists);
 
-      //Compare remote and cached playlists to get outdated playlists
-      final outDatedPlaylists = remotePlaylists.where((remotePlaylist) {
-        var cachePlaylist = cachedPlaylists
-            .where((p) => p.id == remotePlaylist.id)
-            .firstOrNull;
-        return remotePlaylist.snapshotId != (cachePlaylist?.snapshotId);
-      }).toList();
+      if (!skipCachingPlaylistSongs) {
+        //Compare remote and cached playlists to get outdated playlists
+        final outDatedPlaylists = remotePlaylists.where((remotePlaylist) {
+          var cachePlaylist = cachedPlaylists
+              .where((p) => p.id == remotePlaylist.id)
+              .firstOrNull;
+          return remotePlaylist.snapshotId != (cachePlaylist?.snapshotId);
+        }).toList();
 
-      Logger.w(
-        '_startPlaylistSync(): outDatedPlaylists: ${outDatedPlaylists.length}',
-      );
+        Logger.w(
+          '_startPlaylistSync(): outDatedPlaylists: ${outDatedPlaylists.length}',
+        );
 
-      //Use the outdated playlists to fetch it's songs and cache them
-      for (Playlist playlist in outDatedPlaylists) {
-        await Future.delayed(const Duration(milliseconds: 600));
-        //Compares the snapshotId and fetches from API if needs update
-        await getPlaylistSongs(playlist.id, playlist.snapshotId);
+        //Use the outdated playlists to fetch it's songs and cache them
+        for (Playlist playlist in outDatedPlaylists) {
+          await Future.delayed(const Duration(milliseconds: 600));
+          //Compares the snapshotId and fetches from API if needs update
+          await getPlaylistSongs(playlist.id, playlist.snapshotId);
 
-        //Update in cache and local database as soon as each playlist is updated
-        //As much as cached stays persistent even if the app is closed in between
-        _replaceCacheItem(playlist);
+          //Update in cache and local database as soon as each playlist is updated
+          //As much as cached stays persistent even if the app is closed in between
+          _replaceCacheItem(playlist);
+        }
       }
 
       //Update the cache
@@ -455,5 +463,27 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     }
     _cachedPlaylists!.add(playlist);
     await _localDataSource.cacheUserPlaylists(_cachedPlaylists!);
+  }
+
+  @override
+  Future<void> addSongToPlaylist(String playlistId, Song song) async {
+    try {
+      await _remoteDataSource.addTrackToPlaylist(playlistId, song.id);
+      await _localDataSource.addSongToPlaylist(playlistId, song);
+    } catch (e) {
+      Logger.e('addSongToPlaylist() Error: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> removeSongFromPlaylist(String playlistId, String songId) async {
+    try {
+      await _remoteDataSource.removeTrackFromPlaylist(playlistId, songId);
+      await _localDataSource.removeSongFromPlaylist(playlistId, songId);
+    } catch (e) {
+      Logger.e('removeSongFromPlaylist() Error: $e');
+      rethrow;
+    }
   }
 }

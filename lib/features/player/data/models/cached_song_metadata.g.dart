@@ -8,7 +8,7 @@ part of 'cached_song_metadata.dart';
 
 class CachedSongMetadataAdapter extends TypeAdapter<CachedSongMetadata> {
   @override
-  final int typeId = 3;
+  final typeId = 3;
 
   @override
   CachedSongMetadata read(BinaryReader reader) {
@@ -22,12 +22,12 @@ class CachedSongMetadataAdapter extends TypeAdapter<CachedSongMetadata> {
       artist: fields[2] as String,
       album: fields[3] as String,
       coverUrl: fields[4] as String,
-      durationMs: fields[5] as int,
+      durationMs: (fields[5] as num).toInt(),
       remoteUrl: fields[6] as String,
       source: fields[7] as CacheSource,
       filePath: fields[8] as String,
       lastPlayedAt: fields[9] as DateTime,
-      fileSize: fields[10] as int,
+      fileSize: (fields[10] as num).toInt(),
     );
   }
 

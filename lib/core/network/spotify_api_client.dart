@@ -95,6 +95,41 @@ class SpotifyApiClient {
     return response;
   }
 
+  Future<Response> post(String endpoint, {dynamic body}) async {
+    final token = await _authService.getAccessToken();
+    if (token == null) {
+      throw Exception('Not authenticated');
+    }
+
+    var response = await _dio.post(
+      endpoint,
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ),
+      data: body,
+    );
+
+    if (response.statusCode == 401) {
+      final newToken = await _authService.getAccessToken();
+      if (newToken != null) {
+        response = await _dio.post(
+          endpoint,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $newToken',
+              'Content-Type': 'application/json',
+            },
+          ),
+          data: body,
+        );
+      }
+    }
+    return response;
+  }
+
   Future<Response> delete(String endpoint, {dynamic body}) async {
     final token = await _authService.getAccessToken();
     if (token == null) {

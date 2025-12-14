@@ -80,6 +80,16 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     on<ToggleRepeatModeEvent>(_onToggleRepeatMode);
 
     on<PlayerCompleteEvent>((event, emit) {});
+
+    on<ResetPlayer>(_onResetPlayer);
+  }
+
+  FutureOr<void> _onResetPlayer(
+    ResetPlayer event,
+    Emitter<PlayerState> emit,
+  ) async {
+    await _audioHandler.stop();
+    emit(const PlayerState());
   }
 
   void _setupStreams() {

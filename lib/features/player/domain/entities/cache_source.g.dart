@@ -8,7 +8,7 @@ part of 'cache_source.dart';
 
 class CacheSourceAdapter extends TypeAdapter<CacheSource> {
   @override
-  final int typeId = 2;
+  final typeId = 2;
 
   @override
   CacheSource read(BinaryReader reader) {
@@ -27,10 +27,8 @@ class CacheSourceAdapter extends TypeAdapter<CacheSource> {
     switch (obj) {
       case CacheSource.youtube:
         writer.writeByte(0);
-        break;
       case CacheSource.spotify:
         writer.writeByte(1);
-        break;
     }
   }
 

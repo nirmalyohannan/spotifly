@@ -6,6 +6,8 @@ import 'package:spotifly/features/settings/presentation/bloc/settings_bloc.dart'
 import 'package:spotifly/features/settings/presentation/bloc/settings_event.dart';
 import 'package:spotifly/features/settings/presentation/bloc/settings_state.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -17,6 +19,7 @@ class SettingsPage extends StatelessWidget {
       child: BlocListener<SettingsBloc, SettingsState>(
         listener: (context, state) {
           if (state is LogoutSuccess) {
+            context.read<PlayerBloc>().add(ResetPlayer());
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const LoginPage()),
               (route) => false,

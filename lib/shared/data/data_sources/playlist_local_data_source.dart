@@ -21,6 +21,8 @@ abstract class PlaylistLocalDataSource {
 
   Future<void> cachePlaylistSongs(String playlistId, List<Song> songs);
   Future<List<Song>> getPlaylistSongs(String playlistId);
+  Future<void> addSongToPlaylist(String playlistId, Song song);
+  Future<void> removeSongFromPlaylist(String playlistId, String songId);
 
   // We can store snapshotId in the playlist object itself in the list,
   // but we might need a quick lookup or just rely on the list.
@@ -142,6 +144,22 @@ class PlaylistLocalDataSourceImpl implements PlaylistLocalDataSource {
       return data.cast<HiveSong>().map((e) => e.toDomain()).toList();
     }
     return [];
+  }
+
+  @override
+  Future<void> addSongToPlaylist(String playlistId, Song song) async {
+    final currentList = await getPlaylistSongs(playlistId);
+    if (!currentList.any((s) => s.id == song.id)) {
+      currentList.add(song);
+      await cachePlaylistSongs(playlistId, currentList);
+    }
+  }
+
+  @override
+  Future<void> removeSongFromPlaylist(String playlistId, String songId) async {
+    final currentList = await getPlaylistSongs(playlistId);
+    currentList.removeWhere((s) => s.id == songId);
+    await cachePlaylistSongs(playlistId, currentList);
   }
 
   @override

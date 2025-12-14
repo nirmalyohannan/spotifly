@@ -5,6 +5,8 @@ import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
 @immutable
 abstract class PlayerEvent {}
 
+class ResetPlayer extends PlayerEvent {}
+
 class PlayEvent extends PlayerEvent {}
 
 class PauseEvent extends PlayerEvent {}
@@ -82,16 +84,16 @@ class UpdateCurrentSongEvent extends PlayerEvent {
 }
 
 class UpdateIndexEvent extends PlayerEvent {
-    final int index;
-    UpdateIndexEvent(this.index);
+  final int index;
+  UpdateIndexEvent(this.index);
 }
 
 class UpdateRepeatModeEvent extends PlayerEvent {
-    final PlayerRepeatMode mode;
-    UpdateRepeatModeEvent(this.mode);
+  final PlayerRepeatMode mode;
+  UpdateRepeatModeEvent(this.mode);
 }
 
 class UpdateShuffleModeEvent extends PlayerEvent {
-    final bool isShuffleMode;
-    UpdateShuffleModeEvent(this.isShuffleMode);
+  final bool isShuffleMode;
+  UpdateShuffleModeEvent(this.isShuffleMode);
 }

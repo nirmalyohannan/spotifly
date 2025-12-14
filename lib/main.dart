@@ -20,6 +20,7 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(HiveSongAdapter());
   Hive.registerAdapter(HivePlaylistAdapter());
+  Hive.registerAdapter(HivePlaylistOwnerAdapter());
 
   await setupServiceLocator();
 
@@ -40,23 +41,23 @@ class SpotiFlyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SpotiFly',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      initialRoute: initialRoute,
-      routes: {
-        '/': (context) => BlocProvider(
-          create: (context) => PlayerBloc(
-            audioHandler: getIt<AudioHandler>(),
-            addSongToLiked: getIt<AddSongToLiked>(),
-            removeSongFromLiked: getIt<RemoveSongFromLiked>(),
-            isSongLiked: getIt<IsSongLiked>(),
-          ),
-          child: const MainShell(),
-        ),
-        '/login': (context) => const LoginPage(),
-      },
+    return BlocProvider(
+      create: (context) => PlayerBloc(
+        audioHandler: getIt<AudioHandler>(),
+        addSongToLiked: getIt<AddSongToLiked>(),
+        removeSongFromLiked: getIt<RemoveSongFromLiked>(),
+        isSongLiked: getIt<IsSongLiked>(),
+      ),
+      child: MaterialApp(
+        title: 'SpotiFly',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.darkTheme,
+        initialRoute: initialRoute,
+        routes: {
+          '/': (context) => const MainShell(),
+          '/login': (context) => const LoginPage(),
+        },
+      ),
     );
   }
 }

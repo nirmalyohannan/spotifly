@@ -3,19 +3,27 @@
 // Check in to version control
 
 import 'package:hive_ce/hive.dart';
+import 'package:spotifly/features/player/data/models/cached_song_metadata.dart';
+import 'package:spotifly/features/player/domain/entities/cache_source.dart';
 import 'package:spotifly/shared/data/models/hive_playlist.dart';
 import 'package:spotifly/shared/data/models/hive_song.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
+    registerAdapter(CacheSourceAdapter());
+    registerAdapter(CachedSongMetadataAdapter());
     registerAdapter(HivePlaylistAdapter());
+    registerAdapter(HivePlaylistOwnerAdapter());
     registerAdapter(HiveSongAdapter());
   }
 }
 
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
+    registerAdapter(CacheSourceAdapter());
+    registerAdapter(CachedSongMetadataAdapter());
     registerAdapter(HivePlaylistAdapter());
+    registerAdapter(HivePlaylistOwnerAdapter());
     registerAdapter(HiveSongAdapter());
   }
 }

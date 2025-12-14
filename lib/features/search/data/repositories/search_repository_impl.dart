@@ -3,8 +3,8 @@ import 'package:spotifly/core/network/spotify_api_client.dart';
 import 'package:spotifly/core/utils/logger.dart';
 import 'package:spotifly/features/search/domain/entities/search_results.dart';
 import 'package:spotifly/features/search/domain/repositories/search_repository.dart';
+import 'package:spotifly/shared/data/mappers/spotify_mapper.dart';
 import 'package:spotifly/shared/data/models/spotify_models.dart';
-import 'package:spotifly/shared/domain/entities/playlist.dart';
 import 'package:spotifly/shared/domain/entities/song.dart';
 
 class SearchRepositoryImpl implements SearchRepository {
@@ -46,15 +46,7 @@ class SearchRepositoryImpl implements SearchRepository {
 
       final playlists = playlistsData.map((item) {
         final playlist = SpotifyPlaylist.fromJson(item);
-        return Playlist(
-          id: playlist.id,
-          title: playlist.name,
-          creator: playlist.owner.displayName,
-          coverUrl: playlist.images.isNotEmpty
-              ? playlist.images.first.url
-              : 'https://via.placeholder.com/300',
-          snapshotId: playlist.snapshotId,
-        );
+        return SpotifyMapper.toPlaylist(playlist);
       }).toList();
 
       return SearchResults(songs: songs, playlists: playlists);

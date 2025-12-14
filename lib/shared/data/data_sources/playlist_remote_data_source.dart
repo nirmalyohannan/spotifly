@@ -22,6 +22,8 @@ abstract class PlaylistRemoteDataSource {
     int offset = 0,
     int limit = 50,
   });
+  Future<void> addTrackToPlaylist(String playlistId, String trackId);
+  Future<void> removeTrackFromPlaylist(String playlistId, String trackId);
   Future<SpotifyUser> getCurrentUserProfile();
 }
 
@@ -156,6 +158,37 @@ class PlaylistRemoteDataSourceImpl implements PlaylistRemoteDataSource {
         })
         .whereType<SpotifyPlaylist>()
         .toList();
+  }
+
+  @override
+  Future<void> addTrackToPlaylist(String playlistId, String trackId) async {
+    var response = await _apiClient.post(
+      '/playlists/$playlistId/tracks',
+      body: {
+        "uris": ["spotify:track:$trackId"],
+      },
+    );
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw Exception('Failed to add song to playlist');
+    }
+  }
+
+  @override
+  Future<void> removeTrackFromPlaylist(
+    String playlistId,
+    String trackId,
+  ) async {
+    var response = await _apiClient.delete(
+      '/playlists/$playlistId/tracks',
+      body: {
+        "tracks": [
+          {"uri": "spotify:track:$trackId"},
+        ],
+      },
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to remove song from playlist');
+    }
   }
 
   @override

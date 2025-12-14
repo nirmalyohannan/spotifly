@@ -39,6 +39,7 @@ class HomeRepositoryImpl implements HomeRepository {
               ? album.images.first.url
               : 'https://via.placeholder.com/300',
           snapshotId: '', // Albums don't have snapshot_id like playlists
+          owner: null,
         );
       }).toList();
       return _cachedNewReleases!;

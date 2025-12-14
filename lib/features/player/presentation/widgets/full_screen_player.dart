@@ -9,6 +9,7 @@ import 'package:spotifly/features/player/presentation/widgets/player_controls.da
 import 'package:spotifly/features/player/presentation/widgets/player_progress_bar.dart';
 import 'package:spotifly/features/player/presentation/widgets/player_progress_time_row.dart';
 import 'package:spotifly/features/player/presentation/widgets/player_title_and_artist.dart';
+import 'package:spotifly/features/playlists/presentation/widgets/add_to_playlist_bottom_sheet.dart';
 
 class FullScreenPlayer extends StatelessWidget {
   final Color? backgroundColor;
@@ -89,6 +90,7 @@ class FullScreenPlayer extends StatelessWidget {
   }
 
   void _showSnackBar(BuildContext context, PlayerState state) {
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 2),
@@ -118,7 +120,15 @@ class FullScreenPlayer extends StatelessWidget {
         action: SnackBarAction(
           label: 'Change',
           textColor: Colors.green,
-          onPressed: () {},
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) =>
+                  AddToPlaylistBottomSheet(song: state.currentSong!),
+            );
+          },
         ),
         backgroundColor: const Color(0xFF282828),
         behavior: SnackBarBehavior.floating,
