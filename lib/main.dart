@@ -30,17 +30,7 @@ void main() async {
     getIt<LoadPlaylistsWithSync>().call();
   }
 
-  runApp(
-    BlocProvider(
-      create: (context) => PlayerBloc(
-        audioHandler: getIt<AudioHandler>(),
-        addSongToLiked: getIt<AddSongToLiked>(),
-        removeSongFromLiked: getIt<RemoveSongFromLiked>(),
-        isSongLiked: getIt<IsSongLiked>(),
-      ),
-      child: SpotiFlyApp(initialRoute: token != null ? '/' : '/login'),
-    ),
-  );
+  runApp(SpotiFlyApp(initialRoute: token != null ? '/' : '/login'));
 }
 
 class SpotiFlyApp extends StatelessWidget {
@@ -56,7 +46,15 @@ class SpotiFlyApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       initialRoute: initialRoute,
       routes: {
-        '/': (context) => const MainShell(),
+        '/': (context) => BlocProvider(
+          create: (context) => PlayerBloc(
+            audioHandler: getIt<AudioHandler>(),
+            addSongToLiked: getIt<AddSongToLiked>(),
+            removeSongFromLiked: getIt<RemoveSongFromLiked>(),
+            isSongLiked: getIt<IsSongLiked>(),
+          ),
+          child: const MainShell(),
+        ),
         '/login': (context) => const LoginPage(),
       },
     );

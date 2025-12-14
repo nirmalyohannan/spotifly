@@ -396,6 +396,10 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         return remotePlaylist.snapshotId != (cachePlaylist?.snapshotId);
       }).toList();
 
+      Logger.w(
+        '_startPlaylistSync(): outDatedPlaylists: ${outDatedPlaylists.length}',
+      );
+
       //Use the outdated playlists to fetch it's songs and cache them
       for (Playlist playlist in outDatedPlaylists) {
         await Future.delayed(const Duration(milliseconds: 600));
@@ -442,9 +446,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   /// Replaces the cache item with the given playlist item
   /// If the playlist is not in the cache, it is added to the cache
   Future<void> _replaceCacheItem(Playlist playlist) async {
-    if (_cachedPlaylists != null) {
-      _cachedPlaylists = [];
-    }
+    _cachedPlaylists ??= [];
     for (var i = 0; i < _cachedPlaylists!.length; i++) {
       if (_cachedPlaylists![i].id == playlist.id) {
         _cachedPlaylists![i] = playlist;
