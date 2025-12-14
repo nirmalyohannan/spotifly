@@ -1,5 +1,4 @@
-import 'dart:developer';
-
+import 'package:spotifly/core/utils/logger.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:just_audio/just_audio.dart';
@@ -261,7 +260,6 @@ class AudioPlayerHandler extends BaseAudioHandler {
         mediaItem.id,
       );
       if (cachedMetadata != null) {
-        log("Cache Hit for ${mediaItem.title}: ${cachedMetadata.filePath}");
         final file = File(cachedMetadata.filePath);
         if (await file.exists()) {
           // Play from file
@@ -271,7 +269,9 @@ class AudioPlayerHandler extends BaseAudioHandler {
           await _player.play();
           return;
         } else {
-          log("Cache file missing for ${mediaItem.title}");
+          Logger.e(
+            "AudioHandler: Cache file missing | ${mediaItem.title} Path: ${cachedMetadata.filePath}",
+          );
         }
       }
 
@@ -282,7 +282,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
       );
 
       if (url.isEmpty) {
-        log("Could not resolve URL for ${mediaItem.title}");
+        Logger.e("AudioHandler: Could not resolve URL | ${mediaItem.title}");
         return;
       }
 
@@ -321,7 +321,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
       await _player.setAudioSource(source);
       await _player.play();
     } catch (e) {
-      log("Error playing audio: $e");
+      Logger.e("AudioHandler: Error playing audio | $e");
     }
   }
 
@@ -330,7 +330,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
     String mediaId, [
     Map<String, dynamic>? extras,
   ]) async {
-    log("playFromMediaId: $mediaId");
+    Logger.i("AudioHandler: playFromMediaId | $mediaId");
 
     final index = _queue.indexWhere((item) => item.id == mediaId);
     if (index != -1) {
@@ -361,7 +361,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
       );
       await setQueue([mediaItem]);
     } else {
-      log("Song not found in cache or queue: $mediaId");
+      Logger.e("AudioHandler: Song not found in cache or queue | $mediaId");
     }
   }
 
@@ -370,7 +370,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
     String parentMediaId, [
     Map<String, dynamic>? options,
   ]) async {
-    log("getChildren parentMediaId: $parentMediaId");
+    Logger.i("AudioHandler: getChildren | $parentMediaId");
     try {
       switch (parentMediaId) {
         case AudioService.browsableRootId:
@@ -476,7 +476,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
           return [];
       }
     } catch (e) {
-      log("Error in getChildren: $e");
+      Logger.e("AudioHandler: Error in getChildren | $e");
       return [];
     }
   }

@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:developer';
-
 import 'package:rxdart/rxdart.dart';
+import 'package:spotifly/core/utils/logger.dart';
 import 'package:spotifly/shared/data/data_sources/playlist_local_data_source.dart';
 import 'package:spotifly/shared/data/data_sources/playlist_remote_data_source.dart';
 import '../../domain/entities/playlist.dart';
@@ -45,7 +44,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       // Return updated local
       return await _localDataSource.getLikedSongs();
     } catch (e) {
-      log('Error getting liked songs: $e');
+      Logger.e('GetLikedSongs() Error: $e');
       return [];
     }
   }
@@ -141,7 +140,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
       return apiTotal;
     } catch (e) {
-      log('Error fetching liked songs count: $e');
+      Logger.e('GetLikedSongsCount() Error: $e');
       return await _localDataSource.getLikedSongsCount() ?? 0;
     }
   }
@@ -191,7 +190,9 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
           await _localDataSource.cacheLikedSongsCount(total);
         }
       } catch (e) {
-        log('Error refreshing liked songs background at offset $offset: $e');
+        Logger.e(
+          'Error refreshing liked songs background at offset $offset: $e',
+        );
         break;
       }
     }
@@ -210,7 +211,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   @override
   Future<List<Song>> getPlaylistSongs(String id, String? snapshotId) async {
     try {
-      log('getPlaylistSongs() ID: $id  snapshotId: $snapshotId');
+      Logger.i('getPlaylistSongs() ID: $id  snapshotId: $snapshotId');
       // Attempt to retrieve playlist metadata from local cache first.
       final localPlaylists = await _localDataSource.getUserPlaylists();
       final localPlaylist = localPlaylists.cast<Playlist?>().firstWhere(
@@ -259,7 +260,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       // Return the complete list of songs from remote data and all fetched songs.
       return allSongs;
     } catch (e) {
-      log('getPlaylistSongs():Playlist ID $id Error: $e');
+      Logger.e('getPlaylistSongs():Playlist ID $id Error: $e');
       // Fallback to local data if remote fetch fails.
       final localSongs = await _localDataSource.getPlaylistSongs(id);
       return localSongs;
@@ -277,7 +278,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       }
       return localPlaylists;
     } catch (e) {
-      log('_getCachedPlaylists() Error fetching local playlists: $e');
+      Logger.e('_getCachedPlaylists() Error fetching local playlists: $e');
       return [];
     }
   }
@@ -295,7 +296,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       }
       return null;
     } catch (e) {
-      log('Error fetching user profile: $e');
+      Logger.e('getUserProfileImage() Error: $e');
       return null;
     }
   }
@@ -314,7 +315,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       // Update stream
       _likedSongsController.add(await _localDataSource.getLikedSongs());
     } catch (e) {
-      log('addSongToLiked() Error: $e');
+      Logger.e('addSongToLiked() Error: $e');
       rethrow;
     }
   }
@@ -333,7 +334,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       // Update stream
       _likedSongsController.add(await _localDataSource.getLikedSongs());
     } catch (e) {
-      log('removeSongFromLiked() Error: $e');
+      Logger.e('removeSongFromLiked() Error: $e');
       rethrow;
     }
   }
@@ -351,7 +352,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     try {
       return await _remoteDataSource.checkContainsTrack(songId);
     } catch (e) {
-      log('isSongLiked() Error: $e');
+      Logger.e('isSongLiked() Error: $e');
       return false;
     }
   }
@@ -378,7 +379,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   Future<void> _startPlaylistSync() async {
     try {
-      log('_startPlaylistSync(): Started');
+      Logger.i('_startPlaylistSync(): Started');
       //Fetch cached playlists and emit
       var cachedPlaylists = await _getCachedPlaylists();
       _syncPlaylistController!.add(cachedPlaylists);
@@ -409,9 +410,9 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       //Update the cache
       _cachedPlaylists = remotePlaylists;
       await _localDataSource.cacheUserPlaylists(remotePlaylists);
-      log('_startPlaylistSync(): Completed.');
+      Logger.s('_startPlaylistSync(): Completed.');
     } catch (e) {
-      log('_startPlaylistSync(): Error: $e');
+      Logger.e('_startPlaylistSync(): Error: $e');
     }
   }
 

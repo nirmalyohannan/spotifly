@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:developer';
 import 'package:dio/dio.dart';
+import 'package:spotifly/core/utils/logger.dart';
 
 class RateLimitInterceptor extends Interceptor {
   final int maxRequests;
@@ -27,8 +27,9 @@ class RateLimitInterceptor extends Interceptor {
       final now = DateTime.now();
       if (now.isBefore(_retryAfterTime!)) {
         final diff = _retryAfterTime!.difference(now);
-        log(
-          'Rate limit (429) active. Waiting ${diff.inMilliseconds}ms for ${options.method} ${options.path}',
+        Logger.apiRequest(
+          options,
+          message: 'Rate limit (429) active. Waiting ${diff.inMilliseconds}ms ',
         );
         await Future.delayed(diff);
       }
@@ -38,10 +39,10 @@ class RateLimitInterceptor extends Interceptor {
     while (_timestamps.length >= maxRequests) {
       final diff = DateTime.now().difference(_timestamps.first);
       if (diff < interval) {
-        var endpoint = options.path;
-        var method = options.method;
-        log(
-          'Client rate limit. Waiting ${(interval - diff).inMilliseconds}ms for $method $endpoint',
+        Logger.apiRequest(
+          options,
+          message:
+              'Client rate limit. Waiting ${(interval - diff).inMilliseconds}ms',
         );
         await Future.delayed(interval - diff);
       }
@@ -69,7 +70,7 @@ class RateLimitInterceptor extends Interceptor {
 
       _retryAfterTime = DateTime.now().add(duration);
 
-      log('Received 429. Retrying after $retryAfterSeconds seconds.');
+      Logger.e('Received 429. Retrying after $retryAfterSeconds seconds.');
       await Future.delayed(duration);
 
       try {

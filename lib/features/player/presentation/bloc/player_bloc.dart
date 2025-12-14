@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:developer';
-
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/core/services/audio_player_handler.dart';
+import 'package:spotifly/core/utils/logger.dart';
 import 'package:spotifly/features/player/domain/usecases/add_song_to_liked.dart';
 import 'package:spotifly/features/player/domain/usecases/is_song_liked.dart';
 import 'package:spotifly/features/player/domain/usecases/remove_song_from_liked.dart';
@@ -143,7 +142,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         }
       }
     } catch (e) {
-      log("Error toggling like status: $e");
+      Logger.e("PlayerBloc: Error toggling like status: $e");
     }
   }
 
@@ -155,7 +154,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       final isLiked = await _isSongLiked(event.songId);
       emit(state.copyWith(isLiked: isLiked));
     } catch (e) {
-      log("Error checking liked status: $e");
+      Logger.e("PlayerBloc: Error checking liked status: $e");
     }
   }
 

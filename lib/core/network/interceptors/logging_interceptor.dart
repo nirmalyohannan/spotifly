@@ -1,13 +1,10 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
+import 'package:spotifly/core/utils/logger.dart';
 
 class LoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    var time = DateTime.now();
-    var formattedTime =
-        '${time.hour}:${time.minute}:${time.second}.${time.millisecond}';
-    log('$formattedTime | ${options.method} | ${options.path}');
+    Logger.apiRequest(options);
     super.onRequest(options, handler);
   }
 

@@ -1,6 +1,5 @@
-import 'dart:developer';
-
 import 'package:spotifly/core/network/spotify_api_client.dart';
+import 'package:spotifly/core/utils/logger.dart';
 import 'package:spotifly/shared/data/models/paginated_spotify_tracks.dart';
 import 'package:spotifly/shared/data/models/spotify_models.dart';
 
@@ -148,8 +147,10 @@ class PlaylistRemoteDataSourceImpl implements PlaylistRemoteDataSource {
               Map<String, dynamic>.from(item as Map),
             );
           } catch (e) {
-            log('Error parsing playlist: $e');
-            log('Failed item: $item');
+            Logger.e(
+              'PlaylistRemoteDataSourceImpl: Error parsing playlist: $e',
+            );
+            Logger.e('PlaylistRemoteDataSourceImpl: Failed item: $item');
             return null;
           }
         })

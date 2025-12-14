@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:developer' as dev;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:http/http.dart' as http;
+import 'package:spotifly/core/utils/logger.dart';
 import 'package:spotifly/credentials.dart';
 
 class SpotifyAuthService {
@@ -43,7 +43,7 @@ class SpotifyAuthService {
       }
       return false;
     } catch (e) {
-      dev.log('Error authenticating: $e');
+      Logger.e('SpotifyAuthService: Error Authenticating: $e');
       return false;
     }
   }
@@ -73,11 +73,13 @@ class SpotifyAuthService {
         );
         return true;
       } else {
-        dev.log('Failed to exchange code: ${response.body}');
+        Logger.e(
+          'SpotifyAuthService: Failed to exchange code: ${response.body}',
+        );
         return false;
       }
     } catch (e) {
-      dev.log('Error exchanging code: $e');
+      Logger.e('SpotifyAuthService: Error exchanging code: $e');
       return false;
     }
   }
@@ -119,7 +121,7 @@ class SpotifyAuthService {
         );
       }
     } catch (e) {
-      dev.log('Error refreshing token: $e');
+      Logger.e('SpotifyAuthService: Error refreshing token: $e');
     }
   }
 

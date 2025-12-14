@@ -1,8 +1,7 @@
-import 'dart:developer';
 import 'dart:io';
-
 import 'package:hive_ce/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:spotifly/core/utils/logger.dart';
 import 'package:spotifly/features/player/data/models/cached_song_metadata.dart';
 import 'package:spotifly/features/player/domain/repositories/audio_cache_repository.dart';
 
@@ -38,7 +37,7 @@ class AudioCacheRepositoryImpl implements AudioCacheRepository {
       }
       return null;
     } catch (e) {
-      log('Error getting cached song: $e');
+      Logger.e('AudioCacheRepositoryImpl: GetCachedSong(): Error : $e');
       return null;
     }
   }
@@ -48,9 +47,11 @@ class AudioCacheRepositoryImpl implements AudioCacheRepository {
     try {
       final box = await _getBox();
       await box.put(metadata.id, metadata);
-      log('Cached metadata saved for song: ${metadata.title}');
+      Logger.s(
+        'AudioCacheRepositoryImpl: SaveCachedSong() saved: ${metadata.title}',
+      );
     } catch (e) {
-      log('Error saving cached song metadata: $e');
+      Logger.e('AudioCacheRepositoryImpl: SaveCachedSong() Error : $e');
     }
   }
 
@@ -65,9 +66,9 @@ class AudioCacheRepositoryImpl implements AudioCacheRepository {
       if (await cacheDir.exists()) {
         await cacheDir.delete(recursive: true);
       }
-      log('All audio cache cleared.');
+      Logger.s('AudioCacheRepositoryImpl: ClearAllCache() cleared all cache');
     } catch (e) {
-      log('Error clearing cache: $e');
+      Logger.e('AudioCacheRepositoryImpl: ClearAllCache() Error : $e');
     }
   }
 

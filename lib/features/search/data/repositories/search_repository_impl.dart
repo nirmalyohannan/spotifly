@@ -1,7 +1,6 @@
-import 'dart:developer';
-
 import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/network/spotify_api_client.dart';
+import 'package:spotifly/core/utils/logger.dart';
 import 'package:spotifly/features/search/domain/entities/search_results.dart';
 import 'package:spotifly/features/search/domain/repositories/search_repository.dart';
 import 'package:spotifly/shared/data/models/spotify_models.dart';
@@ -60,7 +59,7 @@ class SearchRepositoryImpl implements SearchRepository {
 
       return SearchResults(songs: songs, playlists: playlists);
     } catch (e) {
-      log('Error searching: $e');
+      Logger.e('SearchRepositoryImpl: Error searching: $e');
       return SearchResults(songs: [], playlists: []);
     }
   }

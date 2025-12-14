@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:spotifly/core/utils/logger.dart';
 
 class CachingStreamAudioSource extends StreamAudioSource {
   final Uri uri;
@@ -31,7 +31,7 @@ class CachingStreamAudioSource extends StreamAudioSource {
     int downloadedBytes = 0;
 
     if (isCaching) {
-      log('Starting cache download for $uri to $filePath');
+      Logger.s('Starting cache download for $uri to $filePath');
       cacheFile = File(filePath);
       // Ensure directory exists
       if (!await cacheFile.parent.exists()) {
@@ -89,16 +89,16 @@ class CachingStreamAudioSource extends StreamAudioSource {
             // Verify integrity (basic check: we finished stream without error)
             // Ideally we check total length if known.
             if (totalLength != null && downloadedBytes == totalLength) {
-              log('Cache download complete: $downloadedBytes bytes');
+              Logger.s('Cache download complete: $downloadedBytes bytes');
               onDownloadComplete(downloadedBytes);
             } else if (totalLength == null && downloadedBytes > 0) {
               // If we didn't get total length (e.g. chunked), but finished successfully
-              log(
+              Logger.s(
                 'Cache download complete (length unknown): $downloadedBytes bytes',
               );
               onDownloadComplete(downloadedBytes);
             } else {
-              log(
+              Logger.e(
                 'Cache incomplete. Expected $totalLength, got $downloadedBytes. Deleting.',
               );
               await _cleanup(cacheFile);
@@ -122,7 +122,7 @@ class CachingStreamAudioSource extends StreamAudioSource {
         contentType: response.headers.value('content-type') ?? 'audio/mpeg',
       );
     } catch (e) {
-      log("Error requesting stream: $e");
+      Logger.e("CachingStreamAudioSource: Error requesting stream: $e");
       if (isCaching) {
         await _cleanup(cacheFile);
       }
@@ -135,7 +135,9 @@ class CachingStreamAudioSource extends StreamAudioSource {
       try {
         await file.delete();
       } catch (e) {
-        log("Error deleting partial cache file: $e");
+        Logger.e(
+          "CachingStreamAudioSource: Error deleting partial cache file: $e",
+        );
       }
     }
   }
