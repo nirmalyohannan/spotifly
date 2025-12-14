@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-class LikedSongsShimmerItem extends StatelessWidget {
-  final int index;
-  const LikedSongsShimmerItem({super.key, required this.index});
+class LibrarySongTileShimmer extends StatelessWidget {
+  const LibrarySongTileShimmer({super.key});
 
   @override
   Widget build(BuildContext context) {

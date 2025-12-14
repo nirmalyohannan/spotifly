@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:spotifly/features/library/presentation/widgets/liked_songs_list_item.dart';
-import 'package:spotifly/features/library/presentation/widgets/liked_songs_shimmer_item.dart';
+import 'package:spotifly/features/library/presentation/widgets/library_song_tile.dart';
+import 'package:spotifly/features/library/presentation/widgets/library_song_tile_shimmer.dart';
 import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_bloc.dart';
 import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_state.dart';
 import 'package:spotifly/shared/domain/entities/song.dart';
@@ -53,7 +53,7 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                     state.songs.isEmpty) {
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) => LikedSongsShimmerItem(index: index),
+                      (context, index) => const LibrarySongTileShimmer(),
                       childCount: 15,
                     ),
                   );
@@ -70,7 +70,7 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                   delegate: SliverChildBuilderDelegate((context, index) {
                     // Use shimmers for items not yet in the list but within totalCount
                     if (index >= state.songs.length) {
-                      return LikedSongsShimmerItem(index: index);
+                      return const LibrarySongTileShimmer();
                     }
 
                     final song = state.songs[index];
@@ -78,8 +78,8 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                     return AnimatedSwitcher(
                       duration: const Duration(milliseconds: 600),
                       child: song == null
-                          ? LikedSongsShimmerItem(index: index)
-                          : LikedSongsListItem(
+                          ? const LibrarySongTileShimmer()
+                          : LibrarySongTile(
                               song: song,
                               onTap: () {
                                 // Filter out nulls to get the actual list of songs to play

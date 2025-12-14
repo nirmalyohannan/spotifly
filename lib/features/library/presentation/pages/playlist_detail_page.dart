@@ -1,14 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
-import 'package:spotifly/core/assets.dart';
 import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/theme/app_colors.dart';
 import 'package:spotifly/core/utils/flight_shuttle_builder.dart';
 import 'package:spotifly/features/library/domain/use_cases/get_playlist_songs.dart';
-import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
+import 'package:spotifly/features/library/presentation/widgets/library_song_tile.dart';
+import 'package:spotifly/shared/domain/entities/playlist.dart';
 import 'package:spotifly/shared/domain/entities/song.dart';
-import '../../../../shared/domain/entities/playlist.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
@@ -112,54 +110,11 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                   SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final song = songs[index];
-                      return BlocSelector<PlayerBloc, PlayerState, bool>(
-                        selector: (state) {
-                          return state.currentSong?.id == song.id;
-                        },
-                        builder: (context, isPlaying) {
-                          return AnimatedSize(
-                            duration: const Duration(milliseconds: 300),
-                            child: ListTile(
-                              leading: CachedNetworkImage(
-                                imageUrl: song.coverUrl,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                                errorWidget: (context, error, stackTrace) =>
-                                    Container(
-                                      width: 50,
-                                      height: 50,
-                                      color: Colors.grey,
-                                      child: const Icon(Icons.music_note),
-                                    ),
-                              ),
-                              title: Text(
-                                song.title,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              subtitle: Text(
-                                song.artist,
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                              trailing: isPlaying
-                                  ? LottieBuilder.asset(
-                                      Assets.lotties.isPlaying,
-                                      repeat: true,
-                                      width: 50,
-                                      height: 50,
-                                    )
-                                  : null,
-                              onTap: () {
-                                context.read<PlayerBloc>().add(
-                                  SetPlaylistEvent(
-                                    songs: songs,
-                                    initialIndex: index,
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        },
+                      return LibrarySongTile(
+                        song: song,
+                        onTap: () => context.read<PlayerBloc>().add(
+                          SetPlaylistEvent(songs: songs, initialIndex: index),
+                        ),
                       );
                     }, childCount: songs.length),
                   ),
