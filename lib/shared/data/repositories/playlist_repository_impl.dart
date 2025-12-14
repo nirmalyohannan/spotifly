@@ -400,6 +400,10 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         await Future.delayed(const Duration(milliseconds: 600));
         //Compares the snapshotId and fetches from API if needs update
         await getPlaylistSongs(playlist.id, playlist.snapshotId);
+
+        //Update in cache and local database as soon as each playlist is updated
+        //As much as cached stays persistent even if the app is closed in between
+        _replaceCacheItem(playlist);
       }
 
       //Update the cache
@@ -432,5 +436,21 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       }
     }
     return allRemotePlaylists;
+  }
+
+  /// Replaces the cache item with the given playlist item
+  /// If the playlist is not in the cache, it is added to the cache
+  Future<void> _replaceCacheItem(Playlist playlist) async {
+    if (_cachedPlaylists != null) {
+      _cachedPlaylists = [];
+    }
+    for (var i = 0; i < _cachedPlaylists!.length; i++) {
+      if (_cachedPlaylists![i].id == playlist.id) {
+        _cachedPlaylists![i] = playlist;
+        return;
+      }
+    }
+    _cachedPlaylists!.add(playlist);
+    await _localDataSource.cacheUserPlaylists(_cachedPlaylists!);
   }
 }
