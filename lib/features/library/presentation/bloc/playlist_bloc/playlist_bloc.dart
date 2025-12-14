@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../../../../shared/domain/entities/playlist.dart';
-import '../../../../shared/domain/repositories/playlist_repository.dart';
+import '../../../../../shared/domain/entities/playlist.dart';
+import '../../../../../shared/domain/repositories/playlist_repository.dart';
 
 part 'playlist_event.dart';
 part 'playlist_state.dart';

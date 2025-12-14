@@ -8,7 +8,7 @@ import 'package:spotifly/features/library/presentation/widgets/library_list_view
 import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
 import 'package:spotifly/shared/presentation/widgets/pill.dart';
 import 'package:spotifly/features/settings/presentation/pages/settings_page.dart';
-import '../bloc/playlist_bloc.dart';
+import '../bloc/playlist_bloc/playlist_bloc.dart';
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
