@@ -24,5 +24,5 @@ abstract class PlaylistRepository {
   Future<List<Song>> getLikedSongs();
 
   Stream<List<Song>> get likedSongsStream;
-  void clearCache();
+  Future<void> clearCache();
 }

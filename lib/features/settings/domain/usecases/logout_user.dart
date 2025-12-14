@@ -15,7 +15,7 @@ class LogoutUser {
 
   Future<void> call() async {
     await authService.logout();
-    playlistRepository.clearCache();
+    await playlistRepository.clearCache();
     homeRepository.clearCache();
   }
 }

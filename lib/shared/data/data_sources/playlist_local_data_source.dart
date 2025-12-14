@@ -25,6 +25,8 @@ abstract class PlaylistLocalDataSource {
   // We can store snapshotId in the playlist object itself in the list,
   // but we might need a quick lookup or just rely on the list.
   // Actually, cacheUserPlaylists stores HivePlaylists which have snapshotId.
+
+  Future<void> clear();
 }
 
 class PlaylistLocalDataSourceImpl implements PlaylistLocalDataSource {
@@ -140,5 +142,11 @@ class PlaylistLocalDataSourceImpl implements PlaylistLocalDataSource {
       return data.cast<HiveSong>().map((e) => e.toDomain()).toList();
     }
     return [];
+  }
+
+  @override
+  Future<void> clear() async {
+    final b = await box;
+    await b.clear();
   }
 }

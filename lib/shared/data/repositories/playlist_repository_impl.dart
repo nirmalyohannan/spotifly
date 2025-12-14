@@ -51,20 +51,16 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   }
 
   @override
-  void clearCache() {
+  Future<void> clearCache() async {
     _cachedUserProfileImage = null;
     _cachedPlaylists = null;
-    // We might want to clear local storage too on logout?
-    // User requested "logout user use case should clear... reset in-memory caches".
-    // If we use Hive, we should probably clear it on logout.
-    // However, existing clearCache was for memory.
-    // Let's clear local data source for privacy on logout if this method is used for logout.
-    // But since this method is sync in interface, we can't await.
-    // We should probably rely on the logout use case handling local data source clearing or ignore for now.
-    // Or just clear memory state variables.
-    // For now, let's keep it simple.
+
+    // Clear Hive data
+    await _localDataSource.clear();
+
     _isLikedSongsRefreshing = false;
     _syncPlaylistController?.close();
+    _syncPlaylistController = null;
   }
 
   @override
