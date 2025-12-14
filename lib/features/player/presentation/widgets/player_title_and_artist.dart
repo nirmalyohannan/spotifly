@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
+import 'package:spotifly/features/playlists/presentation/widgets/add_to_playlist_bottom_sheet.dart';
 import 'package:spotifly/shared/domain/entities/song.dart';
 
 class PlayerTitleAndArtist extends StatelessWidget {
@@ -51,7 +52,16 @@ class PlayerTitleAndArtist extends StatelessWidget {
             size: 30,
           ),
           onPressed: () {
-            context.read<PlayerBloc>().add(ToggleLikeStatus());
+            if (isLiked) {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => AddToPlaylistBottomSheet(song: song),
+              );
+            } else {
+              context.read<PlayerBloc>().add(ToggleLikeStatus());
+            }
           },
           color: isLiked ? Colors.green : Colors.white,
         ),

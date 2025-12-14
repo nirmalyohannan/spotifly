@@ -162,6 +162,11 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   ) async {
     try {
       final isLiked = await _isSongLiked(event.songId);
+      if (state.currentSong?.id != event.songId) {
+        // Requested song is not the current song in Player
+        // so we don't need to update the state
+        return;
+      }
       emit(state.copyWith(isLiked: isLiked));
     } catch (e) {
       Logger.e("PlayerBloc: Error checking liked status: $e");

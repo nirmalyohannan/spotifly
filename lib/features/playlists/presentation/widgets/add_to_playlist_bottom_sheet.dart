@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
+import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
 import 'package:spotifly/shared/domain/entities/song.dart';
 import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/shared/domain/repositories/playlist_repository.dart';
@@ -15,232 +17,241 @@ class AddToPlaylistBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AddToPlaylistCubit(
-        playlistRepository: getIt<PlaylistRepository>(),
-        getUserProfile: getIt<GetUserProfile>(),
-        song: song,
-      ),
-      child: FractionallySizedBox(
-        heightFactor: 0.9,
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF121212),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        context.read<PlayerBloc>().add(CheckLikedStatus(song.id));
+      },
+      child: BlocProvider(
+        create: (context) => AddToPlaylistCubit(
+          playlistRepository: getIt<PlaylistRepository>(),
+          getUserProfile: getIt<GetUserProfile>(),
+          song: song,
+        ),
+        child: FractionallySizedBox(
+          heightFactor: 0.9,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF121212),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
             ),
-          ),
-          child: Column(
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 12, bottom: 24),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[600],
-                    borderRadius: BorderRadius.circular(2),
+            child: Column(
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 24),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[600],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
 
-              // Title Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    const Text(
-                      'Saved in',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: Implement New Playlist creation
-                      },
-                      child: const Text(
-                        'New playlist',
-                        style: TextStyle(color: Colors.green),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              Expanded(
-                child: BlocBuilder<AddToPlaylistCubit, AddToPlaylistState>(
-                  builder: (context, state) {
-                    if (state is AddToPlaylistLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (state is AddToPlaylistError) {
-                      return Center(
-                        child: Text(
-                          'Error: ${state.message}',
-                          style: const TextStyle(color: Colors.red),
+                // Title Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    children: [
+                      const Text(
+                        'Saved in',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
-                      );
-                    }
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () {
+                          // TODO: Implement New Playlist creation
+                        },
+                        child: const Text(
+                          'New playlist',
+                          style: TextStyle(color: Colors.green),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
-                    if (state is AddToPlaylistLoaded) {
-                      final playlists = state.playlists;
-                      final query = state.searchQuery?.toLowerCase() ?? '';
+                const SizedBox(height: 16),
 
-                      final filteredPlaylists = playlists.where((p) {
-                        return p.title.toLowerCase().contains(query);
-                      }).toList();
+                Expanded(
+                  child: BlocBuilder<AddToPlaylistCubit, AddToPlaylistState>(
+                    builder: (context, state) {
+                      if (state is AddToPlaylistLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                      return Column(
-                        children: [
-                          // Search Bar
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
+                      if (state is AddToPlaylistError) {
+                        return Center(
+                          child: Text(
+                            'Error: ${state.message}',
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        );
+                      }
+
+                      if (state is AddToPlaylistLoaded) {
+                        final playlists = state.playlists;
+                        final query = state.searchQuery?.toLowerCase() ?? '';
+
+                        final filteredPlaylists = playlists.where((p) {
+                          return p.title.toLowerCase().contains(query);
+                        }).toList();
+
+                        return Column(
+                          children: [
+                            // Search Bar
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF282828),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: TextField(
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                        onChanged: (val) => context
+                                            .read<AddToPlaylistCubit>()
+                                            .filterPlaylists(val),
+                                        decoration: const InputDecoration(
+                                          hintText: 'Find playlist',
+                                          hintStyle: TextStyle(
+                                            color: Colors.grey,
+                                          ),
+                                          prefixIcon: Icon(
+                                            Icons.search,
+                                            color: Colors.white,
+                                          ),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.only(
+                                            top: 8,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Container(
                                     height: 40,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                    alignment: Alignment.center,
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF282828),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: TextField(
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                    child: const Text(
+                                      'Sort',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            Expanded(
+                              child: ListView(
+                                children: [
+                                  // Liked Songs Item (Always present)
+                                  if (query.isEmpty ||
+                                      "liked songs".contains(query))
+                                    _buildLikedSongsTile(context, song),
+
+                                  // Playlist Items
+                                  ...filteredPlaylists.map((playlist) {
+                                    final isPresent =
+                                        state.membershipStatus[playlist.id] ??
+                                        false;
+                                    return ListTile(
+                                      leading: ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: CachedNetworkImage(
+                                          imageUrl: playlist.coverUrl,
+                                          width: 48,
+                                          height: 48,
+                                          fit: BoxFit.cover,
+                                          errorWidget: (context, url, error) =>
+                                              Container(
+                                                color: Colors.grey[800],
+                                                child: const Icon(
+                                                  Icons.music_note,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                        ),
                                       ),
-                                      onChanged: (val) => context
-                                          .read<AddToPlaylistCubit>()
-                                          .filterPlaylists(val),
-                                      decoration: const InputDecoration(
-                                        hintText: 'Find playlist',
-                                        hintStyle: TextStyle(
+                                      title: Text(
+                                        playlist.title,
+                                        style: TextStyle(
+                                          color: isPresent
+                                              ? Colors.green
+                                              : Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        '${50} songs', // TODO: Add song count to Playlist entity or fetch it
+                                        style: const TextStyle(
                                           color: Colors.grey,
                                         ),
-                                        prefixIcon: Icon(
-                                          Icons.search,
-                                          color: Colors.white,
-                                        ),
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.only(top: 8),
                                       ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Container(
-                                  height: 40,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF282828),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'Sort',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          Expanded(
-                            child: ListView(
-                              children: [
-                                // Liked Songs Item (Always present)
-                                if (query.isEmpty ||
-                                    "liked songs".contains(query))
-                                  _buildLikedSongsTile(context, song),
-
-                                // Playlist Items
-                                ...filteredPlaylists.map((playlist) {
-                                  final isPresent =
-                                      state.membershipStatus[playlist.id] ??
-                                      false;
-                                  return ListTile(
-                                    leading: ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: CachedNetworkImage(
-                                        imageUrl: playlist.coverUrl,
-                                        width: 48,
-                                        height: 48,
-                                        fit: BoxFit.cover,
-                                        errorWidget: (context, url, error) =>
-                                            Container(
-                                              color: Colors.grey[800],
-                                              child: const Icon(
-                                                Icons.music_note,
-                                                color: Colors.white,
+                                      trailing: isPresent
+                                          ? const Icon(
+                                              Icons.check_circle,
+                                              color: Colors.green,
+                                            )
+                                          : IconButton(
+                                              icon: const Icon(
+                                                Icons.add_circle_outline,
+                                                color: Colors.grey,
                                               ),
+                                              onPressed: () {
+                                                context
+                                                    .read<AddToPlaylistCubit>()
+                                                    .togglePlaylistSelection(
+                                                      playlist.id,
+                                                    );
+                                              },
                                             ),
-                                      ),
-                                    ),
-                                    title: Text(
-                                      playlist.title,
-                                      style: TextStyle(
-                                        color: isPresent
-                                            ? Colors.green
-                                            : Colors.white,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      '${50} songs', // TODO: Add song count to Playlist entity or fetch it
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    trailing: isPresent
-                                        ? const Icon(
-                                            Icons.check_circle,
-                                            color: Colors.green,
-                                          )
-                                        : IconButton(
-                                            icon: const Icon(
-                                              Icons.add_circle_outline,
-                                              color: Colors.grey,
-                                            ),
-                                            onPressed: () {
-                                              context
-                                                  .read<AddToPlaylistCubit>()
-                                                  .togglePlaylistSelection(
-                                                    playlist.id,
-                                                  );
-                                            },
-                                          ),
-                                    onTap: () {
-                                      context
-                                          .read<AddToPlaylistCubit>()
-                                          .togglePlaylistSelection(playlist.id);
-                                    },
-                                  );
-                                }),
-                              ],
+                                      onTap: () {
+                                        context
+                                            .read<AddToPlaylistCubit>()
+                                            .togglePlaylistSelection(
+                                              playlist.id,
+                                            );
+                                      },
+                                    );
+                                  }),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
+                          ],
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -248,22 +259,14 @@ class AddToPlaylistBottomSheet extends StatelessWidget {
   }
 
   Widget _buildLikedSongsTile(BuildContext context, Song song) {
-    // Need to check specific isLiked status differently since it's not in the generic playlist list
-    // Or we can assume it's passed/managed.
-    // For now, let's use a FutureBuilder wrapper or StreamBuilder on existing Repository for LikedSongs status if not in Cubit.
-    // However, Cubit has `toggleLikedSongs`. Ideally Cubit should emit LikedSongs status too.
-    // Let's implement a simple direct check for now via Repository or handle in Cubit better.
-    // BUT, the prompt wants us to use the Sheet for "Liked Songs" management too.
-
-    return FutureBuilder<bool>(
-      future: getIt<PlaylistRepository>().isSongLiked(song.id),
-      builder: (context, snapshot) {
-        final isLiked =
-            snapshot.data ?? false; // Make sure to handle state update.
-        // This FutureBuilder only runs once. Using proper state management is better.
-        // But let's stick to the visual for now, assuming Cubit handles generic playlists.
-        // Re-implementing correctly: context.read<AddToPlaylistCubit>().toggleLikedSongs() needs visual reflection.
-
+    return BlocBuilder<AddToPlaylistCubit, AddToPlaylistState>(
+      builder: (context, state) {
+        final bool isLiked;
+        if (state is AddToPlaylistLoaded) {
+          isLiked = state.isLiked;
+        } else {
+          isLiked = false;
+        }
         return ListTile(
           leading: Container(
             width: 48,
@@ -290,22 +293,8 @@ class AddToPlaylistBottomSheet extends StatelessWidget {
           ),
           trailing: isLiked
               ? const Icon(Icons.check_circle, color: Colors.green)
-              : IconButton(
-                  icon: const Icon(
-                    Icons.add_circle_outline,
-                    color: Colors.grey,
-                  ),
-                  onPressed: () async {
-                    await context.read<AddToPlaylistCubit>().toggleLikedSongs();
-                    // Force rebuild/update - this is hacky within FutureBuilder.
-                    // Ideally AddToPlaylistState should include bool isLiked;
-                    (context as Element).markNeedsBuild();
-                  },
-                ),
-          onTap: () async {
-            await context.read<AddToPlaylistCubit>().toggleLikedSongs();
-            (context as Element).markNeedsBuild();
-          },
+              : const Icon(Icons.add_circle_outline, color: Colors.grey),
+          onTap: () => context.read<AddToPlaylistCubit>().toggleLikedSongs(),
         );
       },
     );
