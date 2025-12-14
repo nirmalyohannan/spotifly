@@ -407,7 +407,11 @@ class AudioPlayerHandler extends BaseAudioHandler {
           _lastBrowsedMediaItems = items;
           return items;
         case 'playlists':
-          final playlists = await _playlistRepository.getPlaylists();
+          //Taking the first value from stream getPlaylists();
+          //The first value will be playlist list from cache
+          //Invoking the Stream will trigger the API call in background
+          //The new data will be cached and returned from cache in next time
+          final playlists = await _playlistRepository.getPlaylists().first;
           return playlists
               .map(
                 (playlist) => MediaItem(
@@ -443,15 +447,15 @@ class AudioPlayerHandler extends BaseAudioHandler {
           final playlistId = ids[0];
           final playlistSnapshotId = ids.length > 1 ? ids[1] : null;
 
-          final playlist = await _playlistRepository.getPlaylistById(
+          final songs = await _playlistRepository.getPlaylistSongs(
             playlistId,
             playlistSnapshotId,
           );
-          if (playlist != null) {
-            for (var song in playlist.songs) {
+          if (songs.isNotEmpty) {
+            for (var song in songs) {
               _songCache[song.id] = song;
             }
-            final items = playlist.songs
+            final items = songs
                 .map(
                   (song) => MediaItem(
                     id: song.id,

@@ -1,5 +1,5 @@
 import 'package:get_it/get_it.dart';
-import 'package:spotifly/features/library/domain/use_cases/get_playlist_by_id.dart';
+import 'package:spotifly/features/library/domain/use_cases/get_playlist_songs.dart';
 import 'package:spotifly/shared/data/data_sources/playlist_local_data_source.dart';
 import 'package:spotifly/shared/data/data_sources/playlist_remote_data_source.dart';
 import 'package:spotifly/core/network/spotify_api_client.dart';
@@ -25,7 +25,7 @@ import 'package:spotifly/features/settings/domain/usecases/logout_user.dart';
 import 'package:spotifly/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:spotifly/features/library/domain/use_cases/get_liked_songs.dart';
 import 'package:spotifly/features/library/domain/use_cases/get_liked_songs_count.dart';
-import 'package:spotifly/features/library/domain/use_cases/sync_library.dart';
+import 'package:spotifly/features/library/domain/use_cases/sync_playlist_and_songs.dart';
 import 'package:spotifly/features/library/presentation/bloc/liked_songs_bloc/liked_songs_bloc.dart';
 import 'package:spotifly/features/player/data/repositories/audio_cache_repository_impl.dart';
 import 'package:spotifly/features/player/domain/repositories/audio_cache_repository.dart';
@@ -88,11 +88,11 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<GetLikedSongsCount>(
     () => GetLikedSongsCount(getIt<PlaylistRepository>()),
   );
-  getIt.registerLazySingleton<SyncLibrary>(
-    () => SyncLibrary(getIt<PlaylistRepository>()),
+  getIt.registerLazySingleton<SyncPlaylistAndSongs>(
+    () => SyncPlaylistAndSongs(getIt<PlaylistRepository>()),
   );
-  getIt.registerLazySingleton<GetPlaylistById>(
-    () => GetPlaylistById(getIt<PlaylistRepository>()),
+  getIt.registerLazySingleton<GetPlaylistSongs>(
+    () => GetPlaylistSongs(getIt<PlaylistRepository>()),
   );
   getIt.registerFactory<LikedSongsBloc>(
     () => LikedSongsBloc(

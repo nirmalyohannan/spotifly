@@ -1,11 +1,11 @@
 import '../../../../shared/domain/repositories/playlist_repository.dart';
 
-class SyncLibrary {
+class SyncPlaylistAndSongs {
   final PlaylistRepository repository;
 
-  SyncLibrary(this.repository);
+  SyncPlaylistAndSongs(this.repository);
 
   Future<void> call() async {
-    return repository.syncLibrary();
+    return repository.syncPlaylistAndSongs();
   }
 }

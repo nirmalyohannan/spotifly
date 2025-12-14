@@ -44,7 +44,6 @@ class HivePlaylist extends HiveObject {
       title: title,
       creator: creator,
       coverUrl: coverUrl,
-      songs: [], // Songs are stored separately
       snapshotId: snapshotId,
     );
   }

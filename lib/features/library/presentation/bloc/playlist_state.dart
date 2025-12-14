@@ -31,6 +31,20 @@ class PlaylistLoaded extends PlaylistState {
     likedSongsCount,
     isLoading,
   ];
+
+  PlaylistLoaded copyWith({
+    List<Playlist>? playlists,
+    String? userProfileImage,
+    int? likedSongsCount,
+    bool? isLoading,
+  }) {
+    return PlaylistLoaded(
+      playlists ?? this.playlists,
+      userProfileImage: userProfileImage ?? this.userProfileImage,
+      likedSongsCount: likedSongsCount ?? this.likedSongsCount,
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
 }
 
 class PlaylistError extends PlaylistState {

@@ -54,7 +54,6 @@ class SearchRepositoryImpl implements SearchRepository {
           coverUrl: playlist.images.isNotEmpty
               ? playlist.images.first.url
               : 'https://via.placeholder.com/300',
-          songs: [], // Search results don't include tracks for playlists
           snapshotId: playlist.snapshotId,
         );
       }).toList();

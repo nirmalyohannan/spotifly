@@ -5,8 +5,9 @@ import 'package:spotifly/core/assets.dart';
 import 'package:spotifly/core/di/service_locator.dart';
 import 'package:spotifly/core/theme/app_colors.dart';
 import 'package:spotifly/core/utils/flight_shuttle_builder.dart';
-import 'package:spotifly/features/library/domain/use_cases/get_playlist_by_id.dart';
+import 'package:spotifly/features/library/domain/use_cases/get_playlist_songs.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_state.dart';
+import 'package:spotifly/shared/domain/entities/song.dart';
 import '../../../../shared/domain/entities/playlist.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
@@ -23,12 +24,12 @@ class PlaylistDetailPage extends StatefulWidget {
 
 class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
   final _scrollController = ScrollController();
-  late Future<Playlist?> _playlistFuture;
+  late Future<List<Song>> _songsFuture;
 
   @override
   void initState() {
     super.initState();
-    _playlistFuture = getIt<GetPlaylistById>().call(
+    _songsFuture = getIt<GetPlaylistSongs>().call(
       widget.playlist.id,
       widget.playlist.snapshotId,
     );
@@ -43,10 +44,10 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<Playlist?>(
-        future: _playlistFuture,
+      body: FutureBuilder<List<Song>>(
+        future: _songsFuture,
         builder: (context, snapshot) {
-          final playlist = snapshot.data ?? widget.playlist;
+          final songs = snapshot.data ?? [];
           final isLoading = snapshot.connectionState == ConnectionState.waiting;
 
           return Scrollbar(
@@ -59,16 +60,16 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                   floating: false,
                   pinned: true,
                   flexibleSpace: FlexibleSpaceBar(
-                    title: Text(playlist.title),
+                    title: Text(widget.playlist.title),
                     background: Hero(
-                      tag: playlist.id,
+                      tag: widget.playlist.id,
                       flightShuttleBuilder:
                           FlightShuttleBuilders.fadeTransition,
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
                           CachedNetworkImage(
-                            imageUrl: playlist.coverUrl,
+                            imageUrl: widget.playlist.coverUrl,
                             fit: BoxFit.cover,
                             errorWidget: (context, error, stackTrace) =>
                                 Container(
@@ -103,14 +104,14 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                   const SliverFillRemaining(
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if (playlist.songs.isEmpty)
+                else if (songs.isEmpty)
                   const SliverFillRemaining(
                     child: Center(child: Text('No songs in this playlist')),
                   )
                 else ...[
                   SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
-                      final song = playlist.songs[index];
+                      final song = songs[index];
                       return BlocSelector<PlayerBloc, PlayerState, bool>(
                         selector: (state) {
                           return state.currentSong?.id == song.id;
@@ -151,7 +152,7 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                               onTap: () {
                                 context.read<PlayerBloc>().add(
                                   SetPlaylistEvent(
-                                    songs: playlist.songs,
+                                    songs: songs,
                                     initialIndex: index,
                                   ),
                                 );
@@ -160,7 +161,7 @@ class _PlaylistDetailPageState extends State<PlaylistDetailPage> {
                           );
                         },
                       );
-                    }, childCount: playlist.songs.length),
+                    }, childCount: songs.length),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 80)),
                 ],

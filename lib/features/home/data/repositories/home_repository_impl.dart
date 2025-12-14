@@ -39,7 +39,6 @@ class HomeRepositoryImpl implements HomeRepository {
           coverUrl: album.images.isNotEmpty
               ? album.images.first.url
               : 'https://via.placeholder.com/300',
-          songs: [],
           snapshotId: '', // Albums don't have snapshot_id like playlists
         );
       }).toList();
