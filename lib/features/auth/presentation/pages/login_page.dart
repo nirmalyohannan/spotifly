@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:spotifly/core/services/spotify_auth_service.dart';
 import 'package:spotifly/features/shell/presentation/pages/main_shell.dart';
 import 'package:spotifly/core/di/service_locator.dart';
-import 'package:spotifly/features/library/domain/use_cases/sync_playlist_and_songs.dart';
+import 'package:spotifly/features/library/domain/use_cases/load_playlists_with_sync.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -29,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
 
       if (success) {
         // Trigger library sync on successful login
-        getIt<SyncPlaylistAndSongs>().call();
+        getIt<LoadPlaylistsWithSync>().call();
 
         Navigator.of(
           context,

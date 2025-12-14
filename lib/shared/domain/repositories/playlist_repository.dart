@@ -4,7 +4,11 @@ import '../../domain/entities/song.dart';
 abstract class PlaylistRepository {
   Future<int> getLikedSongsCount();
 
-  Stream<List<Playlist>> getPlaylists();
+  ///Syncs playlists and songs
+  ///Yields the List of Playlists from cache as soon as possible
+  ///Yields the List of Playlists from remote when it is available
+  ///and updates the cache of each playlist's List of Songs in background
+  Stream<List<Playlist>> loadPlaylistsWithSync();
 
   ///Playlist with full songs loaded
   ///If snapshotId is provided, it will try to get from cache first if snapshotId matches
@@ -21,7 +25,4 @@ abstract class PlaylistRepository {
 
   Stream<List<Song>> get likedSongsStream;
   void clearCache();
-
-  Future<void> syncPlaylistAndSongs();
-  bool get isLibrarySyncing;
 }

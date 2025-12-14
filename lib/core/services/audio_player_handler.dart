@@ -407,11 +407,13 @@ class AudioPlayerHandler extends BaseAudioHandler {
           _lastBrowsedMediaItems = items;
           return items;
         case 'playlists':
-          //Taking the first value from stream getPlaylists();
+          //Taking the first value from stream loadPlaylistsWithSync();
           //The first value will be playlist list from cache
           //Invoking the Stream will trigger the API call in background
           //The new data will be cached and returned from cache in next time
-          final playlists = await _playlistRepository.getPlaylists().first;
+          final playlists = await _playlistRepository
+              .loadPlaylistsWithSync()
+              .first;
           return playlists
               .map(
                 (playlist) => MediaItem(

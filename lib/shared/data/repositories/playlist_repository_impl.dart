@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:rxdart/rxdart.dart';
 import 'package:spotifly/shared/data/data_sources/playlist_local_data_source.dart';
 import 'package:spotifly/shared/data/data_sources/playlist_remote_data_source.dart';
 import '../../domain/entities/playlist.dart';
@@ -20,10 +21,6 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   List<Playlist>? _cachedPlaylists;
 
   bool _isLikedSongsRefreshing = false;
-  bool _isLibrarySyncing = false;
-
-  @override
-  bool get isLibrarySyncing => _isLibrarySyncing;
 
   final _likedSongsController = StreamController<List<Song>>.broadcast();
 
@@ -67,7 +64,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     // Or just clear memory state variables.
     // For now, let's keep it simple.
     _isLikedSongsRefreshing = false;
-    _isLibrarySyncing = false;
+    _syncPlaylistController?.close();
   }
 
   @override
@@ -217,7 +214,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   @override
   Future<List<Song>> getPlaylistSongs(String id, String? snapshotId) async {
     try {
-      log('Fetching playlist by ID: $id');
+      log('getPlaylistSongs() ID: $id  snapshotId: $snapshotId');
       // Attempt to retrieve playlist metadata from local cache first.
       final localPlaylists = await _localDataSource.getUserPlaylists();
       final localPlaylist = localPlaylists.cast<Playlist?>().firstWhere(
@@ -266,7 +263,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       // Return the complete list of songs from remote data and all fetched songs.
       return allSongs;
     } catch (e) {
-      log('Error fetching playlist $id from remote: $e');
+      log('getPlaylistSongs():Playlist ID $id Error: $e');
       // Fallback to local data if remote fetch fails.
       final localSongs = await _localDataSource.getPlaylistSongs(id);
       return localSongs;
@@ -278,84 +275,14 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       return _cachedPlaylists!;
     }
     try {
-      log('Fetching local playlists...');
       final localPlaylists = await _localDataSource.getUserPlaylists();
-      log('Local playlists found: ${localPlaylists.length}');
       if (localPlaylists.isNotEmpty) {
         _cachedPlaylists = localPlaylists;
       }
       return localPlaylists;
     } catch (e) {
-      log('Error fetching local playlists: $e');
+      log('_getCachedPlaylists() Error fetching local playlists: $e');
       return [];
-    }
-  }
-
-  /// Fetches all remote playlists paginated through while loop
-  Future<List<Playlist>> _fetchAllRemotePlaylists() async {
-    List<Playlist> allRemotePlaylists = [];
-    int offset = 0;
-    const limit = 50;
-    bool hasMore = true;
-    while (hasMore) {
-      await Future.delayed(const Duration(milliseconds: 600));
-      log('Fetching remote playlists offset: $offset');
-      final spotifyPlaylists = await _remoteDataSource.getUserPlaylists(
-        offset: offset,
-        limit: limit,
-      );
-      log('Remote playlists fetched: ${spotifyPlaylists.length}');
-      final playlists = spotifyPlaylists.map(SpotifyMapper.toPlaylist).toList();
-      allRemotePlaylists.addAll(playlists);
-      if (spotifyPlaylists.length < limit) {
-        hasMore = false;
-      } else {
-        offset += limit;
-      }
-    }
-    return allRemotePlaylists;
-  }
-
-  Future<List<Playlist>> _refreshPlaylists() async {
-    try {
-      log('Fetching remote playlists...');
-      // Fetch remote playlists (Paginated)
-      final allRemotePlaylists = await _fetchAllRemotePlaylists();
-      log('Total remote playlists: ${allRemotePlaylists.length}');
-
-      // Update Cache & Local Storage
-      _cachedPlaylists = allRemotePlaylists;
-      await _localDataSource.cacheUserPlaylists(allRemotePlaylists);
-      log('Cached user playlists to Hive');
-
-      return _cachedPlaylists!;
-    } catch (e, stack) {
-      log('Error fetching playlists: $e');
-      log('Stack trace: $stack');
-      // If we differ from original logic which just rethrew if cache empty:
-      // We should probably rethrow here so the caller knows refresh failed?
-      // Or return cached if available?
-      // The original getPlaylists rethrows if cache is empty.
-      // Let's stick to that pattern for refreshPlaylists.
-      if (_cachedPlaylists == null || _cachedPlaylists!.isEmpty) {
-        rethrow;
-      }
-      return _cachedPlaylists!;
-    }
-  }
-
-  @override
-  Stream<List<Playlist>> getPlaylists() async* {
-    try {
-      yield await _getCachedPlaylists();
-
-      //Doesnt refresh if Library is already syncing
-      //Assuming that refreshPlaylists() has been called very recently
-      if (isLibrarySyncing == false) {
-        yield await _refreshPlaylists();
-      }
-    } catch (e) {
-      log('Error fetching playlists: $e');
     }
   }
 
@@ -391,7 +318,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       // Update stream
       _likedSongsController.add(await _localDataSource.getLikedSongs());
     } catch (e) {
-      log('Error adding song to liked: $e');
+      log('addSongToLiked() Error: $e');
       rethrow;
     }
   }
@@ -410,7 +337,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       // Update stream
       _likedSongsController.add(await _localDataSource.getLikedSongs());
     } catch (e) {
-      log('Error removing song from liked: $e');
+      log('removeSongFromLiked() Error: $e');
       rethrow;
     }
   }
@@ -428,23 +355,42 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     try {
       return await _remoteDataSource.checkContainsTrack(songId);
     } catch (e) {
-      log('Error checking if song is liked: $e');
+      log('isSongLiked() Error: $e');
       return false;
     }
   }
 
-  @override
-  Future<void> syncPlaylistAndSongs() async {
-    if (_isLibrarySyncing) return;
-    _isLibrarySyncing = true;
-    // Only start if not already refreshing?
+  BehaviorSubject<List<Playlist>>? _syncPlaylistController;
 
-    log('Syncing playlist song list...');
+  @override
+  Stream<List<Playlist>> loadPlaylistsWithSync() {
+    //If Stream is already open, return it avoiding multiple API Calls
+    if (_syncPlaylistController != null && _syncPlaylistController!.isClosed) {
+      return _syncPlaylistController!.stream;
+    }
+    //Create a new stream
+    _syncPlaylistController = BehaviorSubject<List<Playlist>>();
+
+    //Start the sync process
+    _startPlaylistSync().then((_) {
+      //Close the stream on completion
+      _syncPlaylistController!.close();
+    });
+
+    return _syncPlaylistController!.stream;
+  }
+
+  Future<void> _startPlaylistSync() async {
     try {
-      //Fetch remote playlists and map to Playlist entity
-      var remotePlaylists = (await _fetchAllRemotePlaylists()).toList();
-      //Fetch cached playlists
+      log('_startPlaylistSync(): Started');
+      //Fetch cached playlists and emit
       var cachedPlaylists = await _getCachedPlaylists();
+      _syncPlaylistController!.add(cachedPlaylists);
+
+      //Fetch remote playlists and map to Playlist entity and emit
+      var remotePlaylists = (await _fetchAllRemotePlaylists()).toList();
+      _syncPlaylistController!.add(remotePlaylists);
+
       //Compare remote and cached playlists to get outdated playlists
       final outDatedPlaylists = remotePlaylists.where((remotePlaylist) {
         var cachePlaylist = cachedPlaylists
@@ -463,10 +409,32 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       //Update the cache
       _cachedPlaylists = remotePlaylists;
       await _localDataSource.cacheUserPlaylists(remotePlaylists);
-      log('Playlist song list sync: Completed.');
+      log('_startPlaylistSync(): Completed.');
     } catch (e) {
-      log('Error syncing playlist song list: $e');
+      log('_startPlaylistSync(): Error: $e');
     }
-    _isLibrarySyncing = false;
+  }
+
+  /// Fetches all remote playlists paginated through while loop
+  Future<List<Playlist>> _fetchAllRemotePlaylists() async {
+    List<Playlist> allRemotePlaylists = [];
+    int offset = 0;
+    const limit = 50;
+    bool hasMore = true;
+    while (hasMore) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      final spotifyPlaylists = await _remoteDataSource.getUserPlaylists(
+        offset: offset,
+        limit: limit,
+      );
+      final playlists = spotifyPlaylists.map(SpotifyMapper.toPlaylist).toList();
+      allRemotePlaylists.addAll(playlists);
+      if (spotifyPlaylists.length < limit) {
+        hasMore = false;
+      } else {
+        offset += limit;
+      }
+    }
+    return allRemotePlaylists;
   }
 }

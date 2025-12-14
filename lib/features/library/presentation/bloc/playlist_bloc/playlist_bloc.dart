@@ -24,7 +24,7 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
 
       //This stream emits both data from cache and remote refreshing playlists
       await emit.forEach(
-        playlistRepository.getPlaylists(),
+        playlistRepository.loadPlaylistsWithSync(),
         onData: (playlists) {
           return PlaylistLoaded(
             playlists,
@@ -41,6 +41,10 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
           return PlaylistError(error.toString());
         },
       );
+      //Turn off loading when we have data
+      if (state is PlaylistLoaded) {
+        emit((state as PlaylistLoaded).copyWith(isLoading: false));
+      }
     } catch (e) {
       // If we have cached data, we might want to keep showing it but with an error message?
       // Or just state.
