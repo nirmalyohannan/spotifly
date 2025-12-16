@@ -141,13 +141,13 @@ class CacheManagerView extends StatelessWidget {
             (sum, item) => sum + item.fileSize,
           );
           final totalSizeStr =
-              (totalSize / (1024 * 1024)).toStringAsFixed(1) + " MB";
+              "${(totalSize / (1024 * 1024)).toStringAsFixed(1)} MB";
 
           final selectionSize = state.filteredSongs
               .where((s) => state.selectedIds.contains(s.id))
               .fold(0, (sum, item) => sum + item.fileSize);
           final selectionSizeStr =
-              (selectionSize / (1024 * 1024)).toStringAsFixed(1) + " MB";
+              "${(selectionSize / (1024 * 1024)).toStringAsFixed(1)} MB";
 
           return SafeArea(
             child: Padding(
@@ -175,7 +175,7 @@ class CacheManagerView extends StatelessWidget {
                       // Or just one responsive button?
                       // Let's follow requirements: "buttons like delete selected and delete All"
                       // I'll put them in a Row if both apply, or stack.
-                      child: Text("Delete Selected ($selectionSizeStr)"),
+                      child: const Text("Delete Selected"),
                     ),
                   ),
                   if (!hasSelection && state.allSongs.isNotEmpty) ...[
@@ -183,7 +183,7 @@ class CacheManagerView extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.withOpacity(0.8),
+                          backgroundColor: Colors.red.withAlpha(180),
                           foregroundColor: Colors.white,
                         ),
                         onPressed: () => _showDeleteDialog(
@@ -192,7 +192,7 @@ class CacheManagerView extends StatelessWidget {
                           sizeStr: totalSizeStr,
                           isAll: true,
                         ),
-                        child: Text("Delete All ($totalSizeStr)"),
+                        child: Text("Delete All"),
                       ),
                     ),
                   ],
