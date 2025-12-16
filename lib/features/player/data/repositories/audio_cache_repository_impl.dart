@@ -77,4 +77,26 @@ class AudioCacheRepositoryImpl implements AudioCacheRepository {
     final box = await _getBox();
     return box.values.toList();
   }
+
+  @override
+  Future<void> deleteCachedSongs(List<String> ids) async {
+    try {
+      final box = await _getBox();
+      for (final id in ids) {
+        final metadata = box.get(id);
+        if (metadata != null) {
+          final file = File(metadata.filePath);
+          if (await file.exists()) {
+            await file.delete();
+          }
+          await box.delete(id);
+        }
+      }
+      Logger.s(
+        'AudioCacheRepositoryImpl: deleteCachedSongs() deleted ${ids.length} songs',
+      );
+    } catch (e) {
+      Logger.e('AudioCacheRepositoryImpl: deleteCachedSongs() Error : $e');
+    }
+  }
 }
