@@ -8,6 +8,7 @@ import 'package:spotifly/features/settings/presentation/bloc/settings_state.dart
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_bloc.dart';
 import 'package:spotifly/features/player/presentation/bloc/player_event.dart';
+import 'package:spotifly/features/settings/presentation/pages/cache_manager_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -119,25 +120,25 @@ class SettingsPage extends StatelessWidget {
                         width: double.infinity,
                         child: OutlinedButton(
                           onPressed: () {
-                            // Show confirmation dialog? Or just clear.
-                            // For now, direct clear with snackbar feedback.
-                            context.read<SettingsBloc>().add(
-                              ClearCacheRequested(),
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const CacheManagerPage(),
+                              ),
                             );
                           },
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: const BorderSide(color: Colors.redAccent),
+                            side: const BorderSide(color: Colors.white24),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
                           child: const Text(
-                            'Clear Audio Cache',
+                            'Manage Audio Cache',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.redAccent,
+                              color: Colors.white,
                             ),
                           ),
                         ),

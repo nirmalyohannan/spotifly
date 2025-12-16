@@ -23,6 +23,7 @@ import 'package:spotifly/features/settings/domain/repositories/settings_reposito
 import 'package:spotifly/features/settings/domain/usecases/get_user_profile.dart';
 import 'package:spotifly/features/settings/domain/usecases/logout_user.dart';
 import 'package:spotifly/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:spotifly/features/settings/presentation/cubit/cache_manager_cubit.dart';
 import 'package:spotifly/features/library/domain/use_cases/get_liked_songs.dart';
 import 'package:spotifly/features/library/domain/use_cases/get_liked_songs_count.dart';
 import 'package:spotifly/features/library/domain/use_cases/load_playlists_with_sync.dart';
@@ -137,6 +138,9 @@ Future<void> setupServiceLocator() async {
   );
   getIt.registerLazySingleton<ClearAudioCache>(
     () => ClearAudioCache(getIt<AudioCacheRepository>()),
+  );
+  getIt.registerFactory<CacheManagerCubit>(
+    () => CacheManagerCubit(getIt<AudioCacheRepository>()),
   );
   getIt.registerFactory<SettingsBloc>(
     () => SettingsBloc(

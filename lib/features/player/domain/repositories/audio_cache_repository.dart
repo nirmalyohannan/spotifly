@@ -5,4 +5,5 @@ abstract class AudioCacheRepository {
   Future<void> saveCachedSong(CachedSongMetadata metadata);
   Future<void> clearAllCache();
   Future<List<CachedSongMetadata>> getAllCachedSongs();
+  Future<void> deleteCachedSongs(List<String> ids);
 }
